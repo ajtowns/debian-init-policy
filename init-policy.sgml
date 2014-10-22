@@ -1,3 +1,28 @@
+<!doctype debiandoc system [
+<!entity % versiondata SYSTEM "version.ent"> %versiondata;
+<!entity changesversion "1.8">
+]>
+<debiandoc>
+<book>
+  <titlepag>
+    <title>Debian Init Policy Manual</title>
+    <author>The Debian Policy Mailing List</author>
+    <version>version &version;, &date;</version>
+
+    <abstract>
+      This manual describes the policy requirements for init systems
+      and init scripts within the Debian distirbution.
+    </abstract>
+
+    <copyright>See the Debian Policy manual</copyright>
+
+  </titlepag>
+
+  <toc>
+
+  <chapt id="legacy">
+     <heading>Legacy documentation imported from Debian Policy</heading>
+
       <sect id="sysvinit">
 	<heading>System run levels and <file>init.d</file> scripts</heading>
 
@@ -171,13 +196,14 @@
 	    successfully.
 	  </p>
 
+
 	  <p>
 	    The <file>/etc/init.d</file> scripts must be treated as
 	    configuration files, either (if they are present in the
 	    package, that is, in the .deb file) by marking them as
 	    <tt>conffile</tt>s, or, (if they do not exist in the .deb)
 	    by managing them correctly in the maintainer scripts (see
-	    <ref id="config-files">).  This is important since we want
+	    <url id="https://www.debian.org/doc/debian-policy/ch-files.html#s-config-files" name="Configuration files">).  This is important since we want
 	    to give the local system administrator the chance to adapt
 	    the scripts to the local system, e.g., to disable a
 	    service without de-installing the package, or to specify
@@ -220,7 +246,7 @@ test -f <var>program-executed-later-in-script</var> || exit 0
 	    must contain only variable settings and comments in SUSv3
 	    <prgn>sh</prgn> format.  It may either be a
 	    <tt>conffile</tt> or a configuration file maintained by
-	    the package maintainer scripts.  See <ref id="config-files">
+	    the package maintainer scripts.  See <url id="https://www.debian.org/doc/debian-policy/ch-files.html#s-config-files" name="Configuration files">
 	    for more details.
 	  </p>
 
@@ -243,7 +269,7 @@ test -f <var>program-executed-later-in-script</var> || exit 0
             The <file>init.d</file> scripts must handle this correctly.
             This will typically mean creating any required subdirectories
             dynamically when the <file>init.d</file> script is run.
-            See <ref id="fhs-run"> for more information.
+            See <url id="https://www.debian.org/doc/debian-policy/ch-opersys.html#s-fhs-run" name="Debian policy on /run"> for more information.
 	  </p>
 	</sect1>
 
@@ -679,3 +705,6 @@ fi
           </p>
          </sect1>
       </sect>
+
+  </chapt>
+</book>
