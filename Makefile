@@ -1,8 +1,11 @@
 #include debian/rules
 
-all: init-policy.txt init-policy.html/index.html init-policy.pdf
+all: init-policy.txt init-policy.html/index.html init-policy.pdf systemd-best-practices.pdf
 
 init-policy.sgml: version.ent
+
+systemd-best-practices.pdf: systemd-best-practices.txt
+	pandoc $< -o $@
 
 %.txt: %.org
 	$(EMACS) --batch -Q -l ./README-css.el -l org -l org-ascii --visit $^ \
