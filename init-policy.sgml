@@ -18,7 +18,7 @@
 
   </titlepag>
 
-  <toc>
+  <toc detail="sect1">
 
   <chapt id="admin">
     <heading>Managing Daemons on a Debian System</heading>
@@ -35,49 +35,8 @@
 
   <chapt id="daemonmaint">
     <heading>Maintaining a Daemon</heading>
-    <sect id="init.d">
-      <heading>init.d scripts</heading>
-    </sect>
-    <sect id="systemdunits">
-      <heading>systemd unit files</heading>
-    </sect>
-    <sect id="upstartjobs">
-      <heading>upstart job files</heading>
-    </sect>
-  </chapt>
-
-  <chapt id="initsysmaint">
-    <heading>Maintaining an Init System</heading>
-    <sect id="sbininit">
-      <heading>Providing /sbin/init</heading>
-    </sect>
-    <sect id="boothooks">
-      <heading>Hooking into the boot system</heading>
-    </sect>
-    <sect id="policyhooks">
-      <heading>Hooking into the init policy system</heading>
-      <p>(Covers update-rc.d, invoke-rc.d, policy-rc.d, /usr/sbin/service, etc)</p>
-    <sect id="initpkgnames">
-      <heading>Related packages</heading>
-    </sect>
-  </chapt>
-
-  <chapt id="legacy">
-     <heading>Legacy documentation imported from Debian Policy</heading>
-
-      <sect id="sysvinit">
-	<heading>System run levels and <file>init.d</file> scripts</heading>
-
-	<sect1 id="/etc/init.d">
-	  <heading>Introduction</heading>
-
-	  <p>
-	    The <file>/etc/init.d</file> directory contains the scripts
-	    executed by <prgn>init</prgn> at boot time and when the
-	    init state (or "runlevel") is changed (see <manref
-	    name="init" section="8">).
-	  </p>
-
+    <sect id="background">
+      <heading>Background</heading>
           <p>
             There are at least two different, yet functionally
             equivalent, ways of handling these scripts.  For the sake
@@ -92,86 +51,28 @@
             implemented in the <tt>file-rc</tt> package, please refer
             to the documentation of that package.
 	  </p>
+    </sect>
 
-          <p>
-            These scripts are referenced by symbolic links in the
-	    <file>/etc/rc<var>n</var>.d</file> directories.  When changing
-	    runlevels, <prgn>init</prgn> looks in the directory
-	    <file>/etc/rc<var>n</var>.d</file> for the scripts it should
-	    execute, where <tt><var>n</var></tt> is the runlevel that
-	    is being changed to, or <tt>S</tt> for the boot-up
-	    scripts.
-	  </p>
-
-          <p>
-	    The names of the links all have the form
-	    <file>S<var>mm</var><var>script</var></file> or
-	    <file>K<var>mm</var><var>script</var></file> where
-	    <var>mm</var> is a two-digit number and <var>script</var>
-	    is the name of the script (this should be the same as the
-	    name of the actual script in <file>/etc/init.d</file>).
-	  </p>
-
-          <p>
-	    When <prgn>init</prgn> changes runlevel first the targets
-	    of the links whose names start with a <tt>K</tt> are
-	    executed, each with the single argument <tt>stop</tt>,
-	    followed by the scripts prefixed with an <tt>S</tt>, each
-	    with the single argument <tt>start</tt>.  (The links are
-	    those in the <file>/etc/rc<var>n</var>.d</file> directory
-	    corresponding to the new runlevel.)  The <tt>K</tt> links
-	    are responsible for killing services and the <tt>S</tt>
-	    link for starting services upon entering the runlevel.
-	  </p>
-
+    <sect id="init.d">
+      <heading>init.d scripts</heading>
 	  <p>
-	    For example, if we are changing from runlevel 2 to
-	    runlevel 3, init will first execute all of the <tt>K</tt>
-	    prefixed scripts it finds in <file>/etc/rc3.d</file>, and then
-	    all of the <tt>S</tt> prefixed scripts in that directory.
-	    The links starting with <tt>K</tt> will cause the
-	    referred-to file to be executed with an argument of
-	    <tt>stop</tt>, and the <tt>S</tt> links with an argument
-	    of <tt>start</tt>.
+	    The <file>/etc/init.d</file> directory contains the scripts
+	    executed by <prgn>init</prgn> at boot time and when the
+	    init state (or "runlevel") is changed (see <manref
+	    name="init" section="8">).
 	  </p>
-
-	  <p>
-	    The two-digit number <var>mm</var> is used to determine
-	    the order in which to run the scripts: low-numbered links
-	    have their scripts run first.  For example, the
-	    <tt>K20</tt> scripts will be executed before the
-	    <tt>K30</tt> scripts.  This is used when a certain service
-	    must be started before another.  For example, the name
-	    server <prgn>bind</prgn> might need to be started before
-	    the news server <prgn>inn</prgn> so that <prgn>inn</prgn>
-	    can set up its access lists.  In this case, the script
-	    that starts <prgn>bind</prgn> would have a lower number
-	    than the script that starts <prgn>inn</prgn> so that it
-	    runs first:
-	    <example compact="compact">
-/etc/rc2.d/S17bind
-/etc/rc2.d/S70inn
-	    </example>
-	  </p>
-
-	  <p>
-	    The two runlevels 0 (halt) and 6 (reboot) are slightly
-	    different.  In these runlevels, the links with an
-	    <tt>S</tt> prefix are still called after those with a
-	    <tt>K</tt> prefix, but they too are called with the single
-	    argument <tt>stop</tt>.
-	  </p>
-	</sect1>
-
-	<sect1 id="writing-init">
-	  <heading>Writing the scripts</heading>
 
 	  <p>
 	    Packages that include daemons for system services should
 	    place scripts in <file>/etc/init.d</file> to start or stop
 	    services at boot time or during a change of runlevel.
 	    These scripts should be named
-	    <file>/etc/init.d/<var>package</var></file>, and they should
+	    <file>/etc/init.d/<var>package</var></file>.
+          </p>
+
+        <sect1>
+          <heading>Arguments for init.d scripts</heading>
+          <p>Scripts in init.d should
 	    accept one argument, saying what to do:
 
 	    <taglist>
@@ -214,62 +115,16 @@
 	  </p>
 
 	  <p>
-	    Be careful of using <tt>set -e</tt> in <file>init.d</file>
-	    scripts.  Writing correct <file>init.d</file> scripts requires
-	    accepting various error exit statuses when daemons are already
-	    running or already stopped without aborting
-	    the <file>init.d</file> script, and common <file>init.d</file>
-	    function libraries are not safe to call with <tt>set -e</tt>
-	    in effect<footnote>
-	      <tt>/lib/lsb/init-functions</tt>, which assists in writing
-	      LSB-compliant init scripts, may fail if <tt>set -e</tt> is
-	      in effect and echoing status messages to the console fails,
-	      for example.
-	    </footnote>.  For <tt>init.d</tt> scripts, it's often easier
-	    to not use <tt>set -e</tt> and instead check the result of
-	    each command separately.
-	  </p>
-
-	  <p>
 	    If a service reloads its configuration automatically (as
 	    in the case of <prgn>cron</prgn>, for example), the
 	    <tt>reload</tt> option of the <file>init.d</file> script
 	    should behave as if the configuration has been reloaded
 	    successfully.
 	  </p>
+         </sect1>
 
-
-	  <p>
-	    The <file>/etc/init.d</file> scripts must be treated as
-	    configuration files, either (if they are present in the
-	    package, that is, in the .deb file) by marking them as
-	    <tt>conffile</tt>s, or, (if they do not exist in the .deb)
-	    by managing them correctly in the maintainer scripts (see
-	    <url id="https://www.debian.org/doc/debian-policy/ch-files.html#s-config-files" name="Configuration files">).  This is important since we want
-	    to give the local system administrator the chance to adapt
-	    the scripts to the local system, e.g., to disable a
-	    service without de-installing the package, or to specify
-	    some special command line options when starting a service,
-	    while making sure their changes aren't lost during the next
-	    package upgrade.
-	  </p>
-
-	  <p>
-	    These scripts should not fail obscurely when the
-	    configuration files remain but the package has been
-	    removed, as configuration files remain on the system after
-	    the package has been removed.  Only when <prgn>dpkg</prgn>
-	    is executed with the <tt>--purge</tt> option will
-	    configuration files be removed.  In particular, as the
-	    <file>/etc/init.d/<var>package</var></file> script itself is
-	    usually a <tt>conffile</tt>, it will remain on the system
-	    if the package is removed but not purged.  Therefore, you
-	    should include a <tt>test</tt> statement at the top of the
-	    script, like this:
-	    <example compact="compact">
-test -f <var>program-executed-later-in-script</var> || exit 0
-	    </example>
-	  </p>
+         <sect1>
+           <heading>Environment and customisations</heading>
 
 	  <p>
 	    Often there are some variables in the <file>init.d</file>
@@ -302,23 +157,11 @@ test -f <var>program-executed-later-in-script</var> || exit 0
 	    script must behave sensibly and not fail if the
 	    <file>/etc/default</file> file is deleted.
 	  </p>
+         </sect1>
 
-	  <p>
-            Files and directories under <file>/run</file>, including ones
-            referred to via the compatibility paths <file>/var/run</file>
-            and <file>/var/lock</file>, are normally stored on a temporary
-            filesystem and are normally not persistent across a reboot.
-            The <file>init.d</file> scripts must handle this correctly.
-            This will typically mean creating any required subdirectories
-            dynamically when the <file>init.d</file> script is run.
-            See <url id="https://www.debian.org/doc/debian-policy/ch-opersys.html#s-fhs-run" name="Debian policy on /run"> for more information.
-	  </p>
-	</sect1>
-
-	<sect1>
-	  <heading>Interfacing with the initscript system</heading>
-
-	  <p>
+         <sect1>
+          <heading>Invocation and registration</heading>
+          	  <p>
 	    Maintainers should use the abstraction layer provided by
 	    the <prgn>update-rc.d</prgn> and <prgn>invoke-rc.d</prgn>
 	    programs to deal with initscripts in their packages'
@@ -457,34 +300,9 @@ test -f <var>program-executed-later-in-script</var> || exit 0
 	      <manref name="invoke-rc.d" section="8">.
 	    </p>
 	  </sect2>
-	</sect1>
+        </sect1>
 
-	<sect1>
-	  <heading>Boot-time initialization</heading>
-
-          <p>
-            There used to be another directory, <file>/etc/rc.boot</file>,
-            which contained scripts which were run once per machine
-            boot. This has been deprecated in favour of links from
-            <file>/etc/rcS.d</file> to files in <file>/etc/init.d</file> as
-            described in <ref id="/etc/init.d">.  Packages must not
-            place files in <file>/etc/rc.boot</file>.
-	  </p>
-	</sect1>
-
-	<sect1>
-	  <heading>Example</heading>
-
-	  <p>
-	    An example on which you can base your
-	    <file>/etc/init.d</file> scripts is found in
-	    <file>/etc/init.d/skeleton</file>.
-	  </p>
-
-	</sect1>
-      </sect>
-
-      <sect>
+        <sect1>
 	<heading>Console messages from <file>init.d</file> scripts</heading>
 
 	<p>
@@ -678,7 +496,240 @@ Reloading <var>description</var> configuration...done.
 	    </item>
 	  </list>
 	</p>
+         </sect1>
+
+
+         <sect1>
+          <heading>Miscellaneous Notes</heading>
+	  <p>
+	    Be careful of using <tt>set -e</tt> in <file>init.d</file>
+	    scripts.  Writing correct <file>init.d</file> scripts requires
+	    accepting various error exit statuses when daemons are already
+	    running or already stopped without aborting
+	    the <file>init.d</file> script, and common <file>init.d</file>
+	    function libraries are not safe to call with <tt>set -e</tt>
+	    in effect<footnote>
+	      <tt>/lib/lsb/init-functions</tt>, which assists in writing
+	      LSB-compliant init scripts, may fail if <tt>set -e</tt> is
+	      in effect and echoing status messages to the console fails,
+	      for example.
+	    </footnote>.  For <tt>init.d</tt> scripts, it's often easier
+	    to not use <tt>set -e</tt> and instead check the result of
+	    each command separately.
+	  </p>
+
+	  <p>
+	    The <file>/etc/init.d</file> scripts must be treated as
+	    configuration files, either (if they are present in the
+	    package, that is, in the .deb file) by marking them as
+	    <tt>conffile</tt>s, or, (if they do not exist in the .deb)
+	    by managing them correctly in the maintainer scripts (see
+	    <url id="https://www.debian.org/doc/debian-policy/ch-files.html#s-config-files" name="Configuration files">).  This is important since we want
+	    to give the local system administrator the chance to adapt
+	    the scripts to the local system, e.g., to disable a
+	    service without de-installing the package, or to specify
+	    some special command line options when starting a service,
+	    while making sure their changes aren't lost during the next
+	    package upgrade.
+	  </p>
+
+	  <p>
+	    These scripts should not fail obscurely when the
+	    configuration files remain but the package has been
+	    removed, as configuration files remain on the system after
+	    the package has been removed.  Only when <prgn>dpkg</prgn>
+	    is executed with the <tt>--purge</tt> option will
+	    configuration files be removed.  In particular, as the
+	    <file>/etc/init.d/<var>package</var></file> script itself is
+	    usually a <tt>conffile</tt>, it will remain on the system
+	    if the package is removed but not purged.  Therefore, you
+	    should include a <tt>test</tt> statement at the top of the
+	    script, like this:
+	    <example compact="compact">
+test -f <var>program-executed-later-in-script</var> || exit 0
+	    </example>
+	  </p>
+
+	  <p>
+            Files and directories under <file>/run</file>, including ones
+            referred to via the compatibility paths <file>/var/run</file>
+            and <file>/var/lock</file>, are normally stored on a temporary
+            filesystem and are normally not persistent across a reboot.
+            The <file>init.d</file> scripts must handle this correctly.
+            This will typically mean creating any required subdirectories
+            dynamically when the <file>init.d</file> script is run.
+            See <url id="https://www.debian.org/doc/debian-policy/ch-opersys.html#s-fhs-run" name="Debian policy on /run"> for more information.
+	  </p>
+
+          <p>
+            There used to be another directory, <file>/etc/rc.boot</file>,
+            which contained scripts which were run once per machine
+            boot. This has been deprecated in favour of links from
+            <file>/etc/rcS.d</file> to files in <file>/etc/init.d</file> as
+            described in <ref id="/etc/init.d">.  Packages must not
+            place files in <file>/etc/rc.boot</file>.
+	  </p>
+	</sect1>
+	<sect1>
+	  <heading>Example</heading>
+
+	  <p>
+	    An example on which you can base your
+	    <file>/etc/init.d</file> scripts is found in
+	    <file>/etc/init.d/skeleton</file>.
+	  </p>
+	</sect1>
+    </sect>
+
+    <sect id="systemdunits">
+      <heading>systemd unit files</heading>
+    </sect>
+    <sect id="upstartjobs">
+      <heading>upstart job files</heading>
+	  <p>
+            Packages may integrate with the <prgn>upstart</prgn> event-based
+            boot system by installing job files in the
+            <file>/etc/init</file> directory.
+          </p>
+
+          <p>
+            SysV init scripts for which
+            an equivalent upstart job is available must query the output of
+            the command <prgn>initctl version</prgn> for the string
+            <tt>upstart</tt> and avoid running in favor of the native
+            upstart job, using a test such as this:
+	    <example compact="compact">
+if [ "$1" = start ] && which initctl >/dev/null && initctl version | grep -q upstart
+then
+	exit 1
+fi
+	    </example>
+          </p>
+
+          <p>
+            Because packages shipping upstart jobs may be installed on
+            systems that are not using upstart, maintainer scripts must
+            still use the common <prgn>update-rc.d</prgn> and
+            <prgn>invoke-rc.d</prgn> interfaces for configuring runlevels
+            and for starting and stopping services.  These maintainer
+            scripts must not call the upstart <prgn>start</prgn>,
+            <prgn>restart</prgn>, <prgn>reload</prgn>, or <prgn>stop</prgn>
+            interfaces directly.  Instead, implementations of
+            <prgn>invoke-rc.d</prgn> must detect when upstart is running and
+            when an upstart job with the same name as an init script is
+            present, and perform the requested action using the upstart job
+            instead of the init script.
+          </p>
+          <p>
+            Dependency-based boot managers for SysV init scripts, such as
+            <prgn>startpar</prgn>, may avoid running a given init script
+            entirely when an equivalent upstart job is present, to avoid
+            unnecessary forking of no-op init scripts.  In this case, the
+            boot manager should integrate with upstart to detect when the
+            upstart job in question is started or stopped to know when the
+   
+         dependency has been satisfied.
+         </p>
+    </sect>
+  </chapt>
+
+  <chapt id="initsysmaint">
+    <heading>Maintaining an Init System</heading>
+    <sect id="sbininit">
+      <heading>Providing /sbin/init</heading>
+    </sect>
+    <sect id="boothooks">
+      <heading>Hooking into the boot system</heading>
+    </sect>
+    <sect id="policyhooks">
+      <heading>Hooking into the init policy system</heading>
+      <p>(Covers update-rc.d, invoke-rc.d, policy-rc.d, /usr/sbin/service, etc)</p>
+    <sect id="initpkgnames">
+      <heading>Related packages</heading>
+    </sect>
+  </chapt>
+
+  <chapt id="legacy">
+     <heading>Legacy documentation imported from Debian Policy</heading>
+
+      <sect id="sysvinit">
+	<heading>System run levels and <file>init.d</file> scripts</heading>
+
+	<sect1 id="/etc/init.d">
+	  <heading>Introduction</heading>
+
+          <p>
+            These scripts are referenced by symbolic links in the
+	    <file>/etc/rc<var>n</var>.d</file> directories.  When changing
+	    runlevels, <prgn>init</prgn> looks in the directory
+	    <file>/etc/rc<var>n</var>.d</file> for the scripts it should
+	    execute, where <tt><var>n</var></tt> is the runlevel that
+	    is being changed to, or <tt>S</tt> for the boot-up
+	    scripts.
+	  </p>
+
+          <p>
+	    The names of the links all have the form
+	    <file>S<var>mm</var><var>script</var></file> or
+	    <file>K<var>mm</var><var>script</var></file> where
+	    <var>mm</var> is a two-digit number and <var>script</var>
+	    is the name of the script (this should be the same as the
+	    name of the actual script in <file>/etc/init.d</file>).
+	  </p>
+
+          <p>
+	    When <prgn>init</prgn> changes runlevel first the targets
+	    of the links whose names start with a <tt>K</tt> are
+	    executed, each with the single argument <tt>stop</tt>,
+	    followed by the scripts prefixed with an <tt>S</tt>, each
+	    with the single argument <tt>start</tt>.  (The links are
+	    those in the <file>/etc/rc<var>n</var>.d</file> directory
+	    corresponding to the new runlevel.)  The <tt>K</tt> links
+	    are responsible for killing services and the <tt>S</tt>
+	    link for starting services upon entering the runlevel.
+	  </p>
+
+	  <p>
+	    For example, if we are changing from runlevel 2 to
+	    runlevel 3, init will first execute all of the <tt>K</tt>
+	    prefixed scripts it finds in <file>/etc/rc3.d</file>, and then
+	    all of the <tt>S</tt> prefixed scripts in that directory.
+	    The links starting with <tt>K</tt> will cause the
+	    referred-to file to be executed with an argument of
+	    <tt>stop</tt>, and the <tt>S</tt> links with an argument
+	    of <tt>start</tt>.
+	  </p>
+
+	  <p>
+	    The two-digit number <var>mm</var> is used to determine
+	    the order in which to run the scripts: low-numbered links
+	    have their scripts run first.  For example, the
+	    <tt>K20</tt> scripts will be executed before the
+	    <tt>K30</tt> scripts.  This is used when a certain service
+	    must be started before another.  For example, the name
+	    server <prgn>bind</prgn> might need to be started before
+	    the news server <prgn>inn</prgn> so that <prgn>inn</prgn>
+	    can set up its access lists.  In this case, the script
+	    that starts <prgn>bind</prgn> would have a lower number
+	    than the script that starts <prgn>inn</prgn> so that it
+	    runs first:
+	    <example compact="compact">
+/etc/rc2.d/S17bind
+/etc/rc2.d/S70inn
+	    </example>
+	  </p>
+
+	  <p>
+	    The two runlevels 0 (halt) and 6 (reboot) are slightly
+	    different.  In these runlevels, the links with an
+	    <tt>S</tt> prefix are still called after those with a
+	    <tt>K</tt> prefix, but they too are called with the single
+	    argument <tt>stop</tt>.
+	  </p>
+	</sect1>
+
       </sect>
+
 
       <sect id="alternateinit">
         <heading>Alternate init systems</heading>
@@ -704,48 +755,6 @@ Reloading <var>description</var> configuration...done.
           scripts and may not have a one-to-one correspondence with the init
           scripts.
         </p>
-        <sect1 id="upstart">
-          <heading>Event-based boot with upstart</heading>
-
-	  <p>
-            Packages may integrate with the <prgn>upstart</prgn> event-based
-            boot system by installing job files in the
-            <file>/etc/init</file> directory.  SysV init scripts for which
-            an equivalent upstart job is available must query the output of
-            the command <prgn>initctl version</prgn> for the string
-            <tt>upstart</tt> and avoid running in favor of the native
-            upstart job, using a test such as this:
-	    <example compact="compact">
-if [ "$1" = start ] && which initctl >/dev/null && initctl version | grep -q upstart
-then
-	exit 1
-fi
-	    </example>
-          </p>
-          <p>
-            Because packages shipping upstart jobs may be installed on
-            systems that are not using upstart, maintainer scripts must
-            still use the common <prgn>update-rc.d</prgn> and
-            <prgn>invoke-rc.d</prgn> interfaces for configuring runlevels
-            and for starting and stopping services.  These maintainer
-            scripts must not call the upstart <prgn>start</prgn>,
-            <prgn>restart</prgn>, <prgn>reload</prgn>, or <prgn>stop</prgn>
-            interfaces directly.  Instead, implementations of
-            <prgn>invoke-rc.d</prgn> must detect when upstart is running and
-            when an upstart job with the same name as an init script is
-            present, and perform the requested action using the upstart job
-            instead of the init script.
-          </p>
-          <p>
-            Dependency-based boot managers for SysV init scripts, such as
-            <prgn>startpar</prgn>, may avoid running a given init script
-            entirely when an equivalent upstart job is present, to avoid
-            unnecessary forking of no-op init scripts.  In this case, the
-            boot manager should integrate with upstart to detect when the
-            upstart job in question is started or stopped to know when the
-            dependency has been satisfied.
-          </p>
-         </sect1>
       </sect>
 
   </chapt>
