@@ -20,6 +20,48 @@
 
   <toc>
 
+  <chapt id="admin">
+    <heading>Managing Daemons on a Debian System</heading>
+    <sect id="startstop">
+      <heading>Starting and stopping a daemon</heading>
+    </sect>
+    <sect id="enabledisable">
+      <heading>Enabling and disabling a daemon</heading>
+    </sect>
+    <sect id="policyrcd">
+      <heading>Using policy-rc.d to set daemon policy</heading>
+    </sect>
+  </chapt>
+
+  <chapt id="daemonmaint">
+    <heading>Maintaining a Daemon</heading>
+    <sect id="init.d">
+      <heading>init.d scripts</heading>
+    </sect>
+    <sect id="systemdunits">
+      <heading>systemd unit files</heading>
+    </sect>
+    <sect id="upstartjobs">
+      <heading>upstart job files</heading>
+    </sect>
+  </chapt>
+
+  <chapt id="initsysmaint">
+    <heading>Maintaining an Init System</heading>
+    <sect id="sbininit">
+      <heading>Providing /sbin/init</heading>
+    </sect>
+    <sect id="boothooks">
+      <heading>Hooking into the boot system</heading>
+    </sect>
+    <sect id="policyhooks">
+      <heading>Hooking into the init policy system</heading>
+      <p>(Covers update-rc.d, invoke-rc.d, policy-rc.d, /usr/sbin/service, etc)</p>
+    <sect id="initpkgnames">
+      <heading>Related packages</heading>
+    </sect>
+  </chapt>
+
   <chapt id="legacy">
      <heading>Legacy documentation imported from Debian Policy</heading>
 
