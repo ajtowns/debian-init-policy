@@ -117,6 +117,8 @@ Best practices for systemd support in Debian packages
 
     RHEL7 does NOT use a tmpfs by default, so let's just ignore this for a few more years.
 
+* Packages must not override services from other packages, or install drop-ins modifying services from other packages, without coordination with those packages.
+
 Next actions:
     What shall we do with this? Is a page on wiki.d.o enough? If this should become part of the Policy, is anybody available to shepherd it trought the process?
 Useful resources:
