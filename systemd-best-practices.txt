@@ -88,7 +88,7 @@ Best practices for systemd support in Debian packages
 
     When would this be necessary? Do we need to explicit the cases?
 
-    Most frequently, this would be needed for code that should *not* run under systemd, but which sysvinit or similar systems need to work around issues.  For instance, the recent case of removing a telinit call to reload init, or 
+    Most frequently, this would be needed for code that should *not* run under systemd, but which sysvinit or similar systems need to work around issues.  For instance, the recent case of removing a telinit call to reload init.
 
     Then maybe that code should check if such a different init system is running?
 
