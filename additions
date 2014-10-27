@@ -1,0 +1,63 @@
+
+
+Packages providing a daemon should provide an init.d script, for
+interoperability with sysvinit etc.
+
+init script LSB dependencies; dependencies versus rc?.d/S??*
+
+runlevels? "To the extent this says anything, it should be "Debian does
+not define different behavior for different numeric sysvinit runlevels
+2-5, though sysadmins may do so themselves.  Packages should always
+install init scripts into all numeric runlevels 2-5."  (Plus discussion
+about 0, 1, 6, etc.)"
+
+don't invoke other init scripts from your init script
+
+/lib/lsb/init-functions -- pull from
+/usr/share/doc/lsb-base/README.Debian.gz
+
+Packages may provide a unit file in addition to an init script. If
+both are provided, the installed init system will ensure that either
+the unit file or the init script is used consistently.
+
+If an init script is provided, it should source
+/lib/lsb/init-functions so that /etc/init.d/$daemon gets redirected to
+systemctl.
+
+If an init script is not provided, [...] -- "It's worth stating the
+implications of not providing an init.d script (not having compatibility
+with sysvinit, and thus only working with init systems for which the
+package includes explicit support, such as an upstart job or systemd
+service, for instance)."
+
+Packages should run:
+      update-rc.d $daemon defaults
+      invoke-rc.d $daemon start
+in their postinst, and:
+       invoke-rc.d $daemon stop
+       if [ "$1" = "purge" ]; then update-rc.d $daemon remove; fi
+in postrm. This will enable and activate the daemon according to
+local policy, through whichever init system is in use.
+
+What should they run for systemd?
+
+"Also, given that update-rc.d complains about using anything but
+"defaults", Policy should make that a "must not" too."
+
+rcS.d: ""don't".  These days, I wonder if Policy should hold new rcS
+scripts to the same standard as Pre-Depends: "ask if you think you need
+to add a new one"."
+
+/etc/default: Yes please.  In particular, can we *please* put something in
+Policy advocating against enable/disable switches (that's what update-rc.d
+is for), and suggesting the creation of appropriate daemon configuration
+files upstream, with /etc/default being a last resort working around
+daemons that don't have appropriate configuration mechanisms?
+
+Is this a bug: "(Also, in the course of reading it to find that out,
+I just discovered the crazy behavior of "service foo reload" under
+systemd; if systemctl says a service doesn't support "reload", service
+will go call "/etc/init.d/foo reload", which fortunately will just call
+systemctl foo reload anyway.)"
+
+

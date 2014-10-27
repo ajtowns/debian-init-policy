@@ -886,6 +886,10 @@ fi
     <heading>Maintaining an Init System</heading>
     <sect id="sbininit">
       <heading>Providing /sbin/init</heading>
+      <p>FIXME: Packages providing an init system should provide a binary in
+      /lib/$package/... , invokable via init=/lib/$package/... on the kernel
+      command line.
+      </p>
     </sect>
     <sect id="boothooks">
       <heading>Hooking into the boot system</heading>
@@ -893,8 +897,19 @@ fi
     <sect id="policyhooks">
       <heading>Hooking into the init policy system</heading>
       <p>(Covers update-rc.d, invoke-rc.d, policy-rc.d, /usr/sbin/service, etc)</p>
+      <p>
+      FIXME: As far as I can tell, /usr/sbin/service doesn't actually support
+      "hooking"; it just lives in sysvinit-utils and has specific support for
+      sysvinit, upstart, and systemd.
+      </p>
     <sect id="initpkgnames">
       <heading>Related packages</heading>
+    </sect>
+    <sect>
+      <heading>fixme</heading>
+      <p>advice about compatibility with extended systemd services
+      (systemd-shim, logind, ...?)
+      </p>
     </sect>
   </chapt>
 
