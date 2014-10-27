@@ -50,6 +50,15 @@
       behaviour though, and admins are encouraged to transition to using
       the <prgn>service</prgn> command.
       </p>
+      <p>
+      When using systemd, <prgn>service</prgn> and
+      <prgn>invoke-rc.d</prgn> will operate on both init.d
+      scripts and systemd service files, but will not work
+      with other types of unit files. In this case, admins are
+      required to use <prgn>systemctl</prgn> directly (instead of
+      <prgn>service</prgn>) or <prgn>deb-systemd-invoke</prgn> (instead
+      of <prgn>invoke-rc.d</prgn>).
+      </p>
     </sect>
     <sect id="enabledisable">
       <heading>Enabling and disabling a daemon</heading>
@@ -64,6 +73,15 @@
       <p>
       On Debian systems, all services default to being enabled immediately
       upon installation.
+      </p>
+
+      <p>
+      When using systemd, <prgn>update-rc.d</prgn> will operate on
+      init.d scripts and systemd service files, but will not work with other
+      types of unit files. In this case, admins will need to use
+      <prgn>systemctl</prgn> directly. A program <prgn>deb-systemd-helper</prgn>
+      is also available for this task, however it is intended solely to be used by
+      packages during installation and removal.
       </p>
     </sect>
     <sect id="policyrcd">
