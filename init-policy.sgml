@@ -689,35 +689,23 @@ test -f <var>program-executed-later-in-script</var> || exit 0
       <heading>systemd unit files</heading>
 
       <sect1>
-        <heading>maintainer scripts</heading>
-        <p>
-        <list>
-        <item>Maintainer scripts MUST use deb-systemd-helper and deb-systemd-invoke.</item>
-        <item>Maintainer SHOULD NOT rename .service files but use symlink instead to mask LSB scripts</item>
-        <item>Socket units MUST be stopped at the right time while upgrading and removing the package. (When is the right time? Can/does dh-systemd do this automatically?)</item>
-        </list>
-        </p>
-      </sect1>
-
-      <sect1>
-        <heading>dh-systemd</heading>
-        <p>
-        <list>
-        <item>Packages SHOULD use dh-systemd.</item>
-        <item>Units SHOULD be installed with --restart-after-upgrade. (As long as the package will not break, but most will work fine.)</item>
-        </list>
-        </p>
-      </sect1>
-
-      <sect1>
         <heading>unit files</heading>
         <p>
-        Example unit files are available at ...
+        Example unit files are available at <url id="https://wiki.debian.org/systemd/Packaging">.
         </p>
 
         <p>
         <list>
         <item>
+When you are installing a systemd service file alongside of your SysV init script, you should name it correspondingly. E.g. for /etc/init.d/apache2 the corresponding service file should be named /lib/systemd/system/apache2.service. This way, systemd will automatically prefer the native service file over the SysV init script and use that to start the service. If the names do not match, say your service file is provided by upstream and named NetworkManager.service and your existing SysV init script is called /etc/init.d/network-manager, you can either rename one of the two or you simply use an Alias=. This instruction tells systemctl enable to create a symlink. Augment the service file like this: 
+
+<example>
+[Install]
+Alias=network-manager.service
+</example>
+
+If your service file is not provided by upstream and you ship it as part of your debian package, name it debian/$pkg.service and dh_installinit will install it to the correct location. For more information please refer to the dh_installinit(1) man page.
+        </item><item>
 Packages MUST NOT ship units, tmpfiles configuration, or other systemd  configuration in /etc; they MUST ship it in the systemwide locations in  /lib instead.  Configuration of systemd components in /etc is reserved  exclusively for the system administrator, as it overrides corresponding  configuration in /usr.
         </item><item>
 Units, or code invoked synchronously from units, MUST NOT invoke other services using systemctl, service, or similar tools; doing so may lead to deadlock.  Such invocations typically indicate the need for a dependency, instead.
@@ -765,7 +753,33 @@ Programs SHOULD handle the dynamic addition and removal of network devices and a
 Units MUST either omit the StandardOutput and StandardError directives, or specify them as "null" if the invoked program produces excessive uninteresting output on standard output or standard error.  Units MUST NOT set any other value for StandardOutput or StandardError; doing so overrides the system administrator's preferred configuration from DefaultStandardOutput and DefaultStandardError in systemd-system.conf.
         </item><item>
 Packages shipping a unit that specify a Conflicts= against unit files shipped as part of systemd MUST NOT break any software relying on the interface provided by that unit file. (Does this entirely make sense? Does it just mean packages can't ever break interfaces provided by systemd unit files, even if there's a Conflicts= specified?))
+        </item><item>
+Avoid using Accept=yes in .socket files, because service(8) cannot stop that service correctly. E.g. you have approx.socket and approx@.service, which gets expanded to approx@1-::1:9999-::1:44903.service, then service approx stop will not work.
         </item>
+        </list>
+        </p>
+      </sect1>
+
+      <sect1>
+        <heading>maintainer scripts</heading>
+        <p>
+        <list>
+        <item>Maintainer scripts MUST use deb-systemd-helper and deb-systemd-invoke.</item>
+        <item>Maintainer SHOULD NOT rename .service files but use symlink instead to mask LSB scripts</item>
+        <item>Socket units MUST be stopped at the right time while upgrading and removing the package. (When is the right time? Can/does dh-systemd do this automatically?)</item>
+        </list>
+        </p>
+      </sect1>
+
+      <sect1>
+        <heading>dh-systemd</heading>
+        <p>Maintainers will usually want to use dh-systemd rather than ensuring
+        their maintainer scripts do the right thing manually. If your pakcages
+        us dh-systemd, you will need to:
+        <list>
+        <item>Add Build-Depends on <tt>dh-systemd (>= 1.5)</tt>.
+        <item>Units SHOULD be installed with --restart-after-upgrade. (As long as the package will not break, but most will work fine.)</item>
+        <item>For socket and D-Bus activated services we recommed to use --restart-after-upgrade if your daemon supports that. If your daemon uses the default behaviour (stop in prerm, start in postinst), mask the .service file, so the service is not started on incoming requests while the upgrade is ongoing.</item>
         </list>
         </p>
       </sect1>
