@@ -24,12 +24,116 @@
     <heading>Managing Daemons on a Debian System</heading>
     <sect id="startstop">
       <heading>Starting and stopping a daemon</heading>
+      <p>
+      The standard way to start and stop a daemon in Debian, independent of which
+      init system in use is to use either the <prgn>service</prgn> or
+      <prgn>invoke-rc.d</prgn> commands. For example:
+      <list>
+      <item><prgn>service openssh stop</prgn></item>
+      <item><prgn>invoke-rc.d openssh start</prgn></item>
+      </list>
+      </p>
+      <p>
+      The difference between the two commands is that <prgn>service</prgn>
+      is unconditional, while <prgn>invoke-rc.d</prgn> will only act
+      if the service is currently enabled (ie, configured to start
+      on boot, or in the current runlevel)). <prgn>invoke-rc.d</prgn>
+      is primarily useful for scripts, and is commonly called by the
+      maintainer scripts when installing, upgrading or removing packages.
+      </p>
+      <p>
+      Historically, it has been common to invoke the init scripts
+      in <file>/etc/init.d</file> directly, using a command such as
+      <prgn>/etc/init.d/openssh restart</prgn>. This remains supported
+      (and in a systemd environment, such a command will actually invoke
+      <prgn>systemctl</prgn> instead). This is considered "legacy"
+      behaviour though, and admins are encouraged to transition to using
+      the <prgn>service</prgn> command.
+      </p>
     </sect>
     <sect id="enabledisable">
       <heading>Enabling and disabling a daemon</heading>
+      <p>
+      To set a service to run at boot-time, the command <prgn>update-rc.d</prgn>
+      should be used:
+      <list>
+      <item><prgn>update-rc.d openssh enable</prgn></item>
+      <item><prgn>update-rc.d openssh disable</prgn></item>
+      </list>
+      </p>
+      <p>
+      On Debian systems, all services default to being enabled immediately
+      upon installation.
+      </p>
     </sect>
     <sect id="policyrcd">
       <heading>Using policy-rc.d to set daemon policy</heading>
+      <p>
+      System administrators may provide a
+      <prgn>/usr/sbin/policy-rc.d</prgn> to alter the default behaviour
+      of <prgn>update-rc.d</prgn> and <prgn>invoke-rc.d</prgn>. Implementations
+      of <prgn>policy-rc.d</prgn> are supplied by some packages.
+      </p>
+      <p>
+      The <prgn>policy-rc.d</prgn> script is called using the following convention:
+      <list>
+      <item><prgn>policy-rc.d "<var>$SERVICE</var>" "<var>$ACTIONS</var>" <var>$RUNLEVELS</var></prgn></item>
+      <item><prgn>policy-rc.d --list "<var>$SERVICE</var>" <var>$RUNLEVELS</var></prgn></item>
+      </list>
+      </p>
+      <p>
+      Error messages may be sent to <tt>stderr</tt>, unless <tt>--quiet</tt> is
+      specified as the first argument.
+      </p>
+      <p>
+      Supporting the <tt>--list</tt> argument is optional, as it is not
+      used by <prgn>invoke-rc.d</prgn>. If supported, it should provide
+      a human-readable list of the policies, actions and fallbacks for
+      the given service, in the specified runlevels (or all runlevels
+      if no runlevels are specified).
+      </p>
+      <p>
+      When invoked ordinarily, <prgn>policy-rc.d</prgn> should do one of the
+      following:
+      <taglist>
+      <tag>allow action</tag>
+      <item>Exit with status code <tt>0</tt>.</item>
+      <tag>forbid action</tag>
+      <item>Exit with status code <tt>101</tt>.</item>
+      <tag>override action</tag>
+      <item>Exit with status code <tt>106</tt>, and output replacement
+      actions on a single line, separated by spaces. Replacement actions
+      will be attempted sequentially until one of them succeeds.</item>
+      <tag>undefined policy</tag>
+      <item>Exit with status code <tt>1</tt> or
+      <tt>105</tt>. <prgn>invoke-rc.d</prgn> will emit an error message,
+      but then act as if the action was allowed.</item>
+      <tag>internal error</tag>
+      <item>Exit with status code <tt>100</tt> (unknown service),
+      <tt>102</tt> (subsystem error) or <tt>103</tt> (syntax
+      error). <prgn>invoke-rc.d</prgn> will exit with the same status
+      code.</item>
+      </taglist>
+      The most useful behaviours are allowing, forbidding and overriding actions.
+      </p>
+      <p>
+      Note that <var>$ACTIONS</var> may be a single action
+      (<tt>start</tt>, <tt>stop</tt>, etc), or may be a space
+      separated list of actions.
+      </p>
+      <p>
+      If <prgn>invoke-rc.d</prgn> detects an out-of-runlevel start or
+      restart attempt, the action will be replaced by <tt>(start)</tt>
+      or <tt>(restart)</tt> as appropriate before <prgn>policy-rc.d</prgn>
+      is called.
+      </p>
+      <p>
+      The runlevel parameters are optional. If a runlevel is not
+      specified, it is considered to be unknown/undefined. A runlevel
+      for update-rc.d is defined as a character string, of which the
+      usual INIT one-character runlevels are only a subset. It may
+      contain embedded blanks.
+      </p>
     </sect>
   </chapt>
 
