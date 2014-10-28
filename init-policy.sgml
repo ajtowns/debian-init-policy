@@ -356,6 +356,13 @@
           </p>
 
           <p>
+          One thing init scripts must not do is invoke other init scripts
+          directly.  This interacts badly with dependency resolution
+          using some init systems, and may cause services not to start or stop
+          correctly.
+          </p>
+
+          <p>
           LSB init script headers are specified by a block in the init script
           beginning with <tt>### BEGIN INIT INFO</tt> and ending with
           <tt>### END INIT INFO</tt>.  Lines within the block are of the
@@ -407,7 +414,10 @@
 
           <tag>X-Interactive: true</tag>
           <item>Indicates that this init script can interact with the
-          user, requesting some input (for example, a password).</item>
+          user, requesting some input (for example, a password). Note that
+          this is a Debian extension and is not supported by systemd;
+          if it is used a separate <tt>.service</tt> file for systemd
+          must be included.</item>
 
           <tag>Short-Description: <var>short_description</var></tag>
           <item>Provides a brief description of the actions of the service.
@@ -542,7 +552,7 @@
               and in your <prgn>postrm</prgn>
               <example compact="compact">
                 if [ "$1" = purge ]; then
-                update-rc.d <var>package</var> remove
+                    update-rc.d <var>package</var> remove
                 fi
               </example>. Note that if your package changes runlevels
               or priority, you may have to remove and recreate the links,
@@ -927,14 +937,34 @@ test -f <var>program-executed-later-in-script</var> || exit 0
         <p>
         <list>
         <item>
-When you are installing a systemd service file alongside of your SysV init script, you should name it correspondingly. E.g. for /etc/init.d/apache2 the corresponding service file should be named /lib/systemd/system/apache2.service. This way, systemd will automatically prefer the native service file over the SysV init script and use that to start the service. If the names do not match, say your service file is provided by upstream and named NetworkManager.service and your existing SysV init script is called /etc/init.d/network-manager, you can either rename one of the two or you simply use an Alias=. This instruction tells systemctl enable to create a symlink. Augment the service file like this:
+          When you are installing a systemd service file alongside of your
+          SysV init script, you should name it correspondingly. E.g. for
+          /etc/init.d/apache2 the corresponding service file should be
+          named /lib/systemd/system/apache2.service. This way, systemd
+          will automatically prefer the native service file over the SysV
+          init script and use that to start the service. If the names do
+          not match, say your service file is provided by upstream and
+          named NetworkManager.service and your existing SysV init script
+          is called /etc/init.d/network-manager, you can either rename
+          one of the two or you simply use an Alias=. This instruction
+          tells systemctl enable to create a symlink. Augment the service
+          file like this:
 
 <example>
 [Install]
 Alias=network-manager.service
 </example>
 
-If your service file is not provided by upstream and you ship it as part of your debian package, name it debian/$pkg.service and dh_installinit will install it to the correct location. For more information please refer to the dh_installinit(1) man page.
+           If your service file is not provided by upstream and you ship
+           it as part of your debian package, name it debian/$pkg.service
+           and dh_installinit will install it to the correct location. For
+           more information please refer to the dh_installinit(1)
+           man page.
+        </item><item>
+           If a package ships a unit and a corresponding init script, the
+           init script must source <file>/lib/lsb/init-functions</file>
+           so that running the init script gets redirected to systemctl
+           and systemd can continue to manage the service.
         </item><item>
 Packages MUST NOT ship units, tmpfiles configuration, or other systemd  configuration in /etc; they MUST ship it in the systemwide locations in  /lib instead.  Configuration of systemd components in /etc is reserved  exclusively for the system administrator, as it overrides corresponding  configuration in /usr.
         </item><item>
@@ -1021,7 +1051,7 @@ Avoid using Accept=yes in .socket files, because service(8) cannot stop that ser
         <item>
 FIXME: Packages which ship both a unit file and an /etc/init.d/ service MUST depend on ... / recommend ...
         </item><item>
-FIXME: Packages which ship only a systemd unit file, or otherwise depend on systemd, MUST depend on ...  Note that packages SHOULD accept patches adding support for other init systems, if feasible and maintainable.
+FIXME: Packages which ship only a systemd unit file, or otherwise depend on systemd, MUST depend on ...  Note that packages SHOULD accept patches adding support for other init systems, if feasible and maintainable. Note that this means the service will not be compatible with sysvinit or other init systems. In most cases having an init script is the sensible course of action.
         </item><item>
 Packages using functionality of systemd only present introduced in version V of systemd, must either specify "Depends: systemd (>= V)" if only a unit file is provided, or specify a "Breaks: systemd (< V)". In order to avoid confusing apt, packages should in general only use features of systemd that are already present in the version of systemd already present in the testing suite.
         </item>

@@ -21,6 +21,11 @@ should service be in /sbin rather than /usr/sbin? (matching redhat)
 
 shouldn't deb-systemd-{invoke,helper} be in /usr/sbin? (not possible)
 
+"(Also, in the course of reading it to find that out, I just discovered
+the crazy behavior of "service foo reload" under systemd; if systemctl
+says a service doesn't support "reload", service will go call
+"/etc/init.d/foo reload", which fortunately will just call systemctl
+foo reload anyway.)"
 
 
 
