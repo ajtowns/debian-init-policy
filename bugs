@@ -1,0 +1,28 @@
+
+policy-rc.d: shouldn't it take effect during boot as well as package
+installation? the only thing that seems to use it is invoke-rc.d though;
+update-rc.d or init itself would have to pay attention for it to affect
+boot time as well. (if it's just for package installs, seems kinda complicated)
+
+invoke-rc.d, update-rc.d, policy-rc.d are all poorly named...
+
+service, invoke-rc.d, update-rc.d should probably work with .socket etc files, so
+that systemd doesn't need different scripts to do the same things
+
+force-reload needs to be mapped to reload-or-restart for systemd doesn't it? it
+currently checks for "CanReload" then restarts or reloads.
+
+why do rc.d directories even still exist when you're running
+systemd? answer: systemd-sysv-generator uses them. shouldn't it use
+init.d directly instead, and allow services that shouldn't be enabled
+by default to be masked in systemd's usual manner?
+
+should service be in /sbin rather than /usr/sbin? (matching redhat)
+
+shouldn't deb-systemd-{invoke,helper} be in /usr/sbin? (not possible)
+
+
+
+
+
+
