@@ -1,10 +1,4 @@
 
-
-Packages providing a daemon should provide an init.d script, for
-interoperability with sysvinit etc.
-
-init script LSB dependencies; dependencies versus rc?.d/S??*
-
 runlevels? "To the extent this says anything, it should be "Debian does
 not define different behavior for different numeric sysvinit runlevels
 2-5, though sysadmins may do so themselves.  Packages should always

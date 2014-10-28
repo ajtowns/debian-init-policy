@@ -37,7 +37,7 @@
       The difference between the two commands is that <prgn>service</prgn>
       is unconditional, while <prgn>invoke-rc.d</prgn> will only act
       if the service is currently enabled (ie, configured to start
-      on boot, or in the current runlevel)). <prgn>invoke-rc.d</prgn>
+      on boot, or in the current runlevel). <prgn>invoke-rc.d</prgn>
       is primarily useful for scripts, and is commonly called by the
       maintainer scripts when installing, upgrading or removing packages.
       </p>
@@ -46,8 +46,8 @@
       in <file>/etc/init.d</file> directly, using a command such as
       <prgn>/etc/init.d/openssh restart</prgn>. This remains supported
       (and in a systemd environment, such a command will actually invoke
-      <prgn>systemctl</prgn> instead). This is considered "legacy"
-      behaviour though, and admins are encouraged to transition to using
+      <prgn>systemctl</prgn> instead), but this is considered "legacy"
+      behaviour, and admins are encouraged to transition to using
       the <prgn>service</prgn> command.
       </p>
       <p>
@@ -178,7 +178,16 @@
       <heading>Background</heading>
           <p>
             There are at least two different, yet functionally
-            equivalent, ways of handling these scripts.  For the sake
+            equivalent, ways of launching daemons at boot time. The
+            traditional approach uses executable scripts located in
+            <file>/etc/init.d</file>, however newer solutions such as
+            <prgn>systemd</prgn> and <prgn>upstart</prgn> use a more
+            descriptive approach to manage daemons.
+          </p>
+
+          <p>
+            Even in the case of traditional init scripts, there are
+            multiple ways of handling these scripts.  For the sake
             of simplicity, this document describes only the symbolic
             link method. However, it must not be assumed by maintainer
             scripts that this method is being used, and any automated
@@ -234,12 +243,25 @@
               <item>cause the configuration to be reloaded if the
                   service supports this, otherwise restart the
                   service.</item>
+
+              <tag><tt>status</tt></tag>
+
+              <item>report whether the service is running<footnote>A
+                  service is running if the result of the <tt>start</tt>
+                  action is in effect.</footnote>, exiting with status 0
+                  if if the service is running, or, if the service is not
+                  running, with a status other than 0<footnote>Packages
+                  are encouraged to use the specific nonzero exit
+                  statuses defined by LSB, but policy currently does
+                  not require their use.  It is only required to
+                  distinguish between 0 for running and not 0 for not
+                  running.</footnote>.</item>
             </taglist>
 
-            The <tt>start</tt>, <tt>stop</tt>, <tt>restart</tt>, and
-            <tt>force-reload</tt> options should be supported by all
-            scripts in <file>/etc/init.d</file>, the <tt>reload</tt>
-            option is optional.
+            The <tt>start</tt>, <tt>stop</tt>, <tt>restart</tt>,
+            <tt>force-reload</tt>, and <tt>status</tt> options should be
+            supported by all scripts in <file>/etc/init.d</file>; the
+            <tt>reload</tt> option is optional.
           </p>
 
           <p>
@@ -259,6 +281,30 @@
             <tt>reload</tt> option of the <file>init.d</file> script
             should behave as if the configuration has been reloaded
             successfully.
+          </p>
+
+          <p>
+            Init scripts may wish to use the LSB exit status codes<footnote><url id="http://refspecs.linuxfoundation.org/LSB_4.1.0/LSB-Core-generic/LSB-Core-generic/iniscrptact.html"></footnote>. These are:
+
+            <taglist>
+            <tag>0</tag> <item>program is running or service is OK</item>
+            <tag>1</tag> <item>program is dead and /var/run pid file exists</item>
+            <tag>2</tag> <item>program is dead and /var/lock lock file exists</item>
+            <tag>3</tag> <item>program is not running</item>
+            <tag>4</tag> <item>program or service status is unknown</item>
+            <tag>100-149</tag> <item>reserved for distribution use</item>
+            </taglist>
+          </p>
+          <p>
+            Note however that when the service is
+            removed but not purged the init script should exit with an error status
+            of 0 on <tt>start</tt> or <tt>stop</tt>.
+          </p>
+          <p>
+            Error codes 100-149 are reserved for distribution use, so may be
+            used by packages if needed, however maintainers should discuss
+            the introduction of such codes first. All other codes are reserved
+            so should not be used by Debian packages. 
           </p>
          </sect1>
 
@@ -299,6 +345,140 @@
          </sect1>
 
          <sect1>
+          <heading>Dependencies between services</heading>
+          <p>
+          Often services will need to be started in a particular order;
+          for example a remote file system may only be able to be mounted
+          after networking is configured, and configuring networking
+          may require a VPN service to be started. These dependencies are
+          controlled using LSB-style headers<footnote><url id="http://refspecs.linuxfoundation.org/LSB_4.1.0/LSB-Core-generic/LSB-Core-generic/initscrcomconv.html"></footnote>
+          in the init scripts themselves.
+          </p>
+
+          <p>
+          LSB init script headers are specified by a block in the init script
+          beginning with <tt>### BEGIN INIT INFO</tt> and ending with
+          <tt>### END INIT INFO</tt>.  Lines within the block are of the
+          form <tt># <var>Keyword</var>: <var>arguments...</var></tt>,
+          with exactly one space between the <tt>#</tt> and the keyword.
+          </p>
+
+          <p>Dependency related keywords include:
+          <taglist>
+          <tag>Provides: <var>service_1</var> <var>service_2...</var></tag>
+          <item>Lists services provided by this script. Should usually include
+          the script name.</item>
+
+          <tag>Required-Start: <var>service_1</var> <var>service_2...</var></tag>
+          <item>Lists services which need to be started before this
+          service can be started.</item>
+
+          <tag>Required-Stop: <var>service_1</var> <var>service_2...</var></tag>
+          <item>Lists services which need to be available for this service
+          to be stopped. This will often be the same set of services as
+          in Required-Start.</item>
+
+          <tag>Should-Start: <var>service_1</var> <var>service_2...</var></tag> 
+          <item>Lists services which, if present, should be started before
+          this service is started. (If these services are not present, the
+          service being started may have reduced functionality, eg)</item>
+
+          <tag>Should-Stop: <var>service_1</var> <var>service_2...</var></tag>
+          <item>As per Required-Stop/Should-Start.</item>
+
+          <tag>X-Start-Before: <var>service_1</var> <var>service_2...</var></tag> 
+          <item>Lists services which, if present, should only be started after this
+          service is started. This acts as if <tt>Should-Start: <var>me</var></tt>
+          had been included in each of <var>service_1</var>, <var>service_2</var>'s
+          init scripts.</item>
+
+          <tag>X-Start-After: <var>service_1</var> <var>service_2...</var></tag>
+          <item>As per Should-Stop/X-Start-Before.</item>
+
+          <tag>Default-Start: <var>runlevels...</var></tag>
+          <item>Lists runlevels the service should be activated in by
+          default. For most Debian packages, this should be <tt>2 3
+          4 5</tt>.</item>
+
+          <tag>Default-Stop: <var>runlevels...</var></tag>
+          <item>Lists runlevels the service should be deactivated in by
+          default. For most Debian packages, this should be <tt>0 1
+          6</tt>.</item>
+
+          <tag>X-Interactive: true</tag>
+          <item>Indicates that this init script can interact with the
+          user, requesting some input (for example, a password).</item>
+
+          <tag>Short-Description: <var>short_description</var></tag>
+          <item>Provides a brief description of the actions of the service.
+          Limited to a single line of text.</item>
+
+          <tag>Description: <var>multiline_description</var></tag>
+          <item>Provides a more complete description of the actions
+          of the init script. This is the only entry that may span
+          multiple lines. In a multiline description, each continuation
+          line begins with a '#' followed by tab character or a '#'
+          followed by at least two space characters. The multiline
+          description is terminated by the first line that does not
+          match this criteria.</item>
+          </taglist>
+          </p>
+
+          <p>
+          There are some "virtual" service names that are used:
+
+          <taglist>
+          <tag>$local_fs</tag>
+          <item>all local filesystems are mounted. All scripts that
+          write in /var/ need to depend on this, unless they already
+          depend on $remote_fs.</item>
+
+          <tag>$network</tag>
+          <item>low level networking (ethernet card; may imply PCMCIA running)</item>
+
+          <tag>$named</tag>
+          <item>daemons which may provide hostname resolution (if
+          present) are running. For example, daemons to query DNS, NIS+,
+          or LDAP.</item>
+
+          <tag>$portmap</tag>
+          <item>daemons providing ?SunRPC/ONCRPC portmapping service as
+          defined in RFC 1833 (if present) are running</item>
+
+          <tag>$remote_fs</tag>
+          <item>all filesystems are mounted. In some LSB run-time
+          environments, filesystems such as /usr may be remote. If
+          the script need a mounted /usr/, it needs to depend on
+          $remote_fs. Scripts depending on $remote_fs do not need to
+          depend on $local_fs. During shutdown, scripts that need to
+          run before sendsigs kills all processes should depend on
+          $remote_fs.</item>
+
+          <tag>$syslog</tag>
+          <item>system logger is operational</item>
+
+          <tag>$time</tag>
+          <item>the system time has been set, for example by using
+          a network-based time program such as ntp or rdate, or via
+          the hardware Real Time Clock. Note that just depending
+          on ntp will not result in an accurate time just after ntp
+          started. It usually takes minutes until ntp actually adjusts
+          the time. Also note that standard insserv.conf just lists
+          hwclock as $time.</item>
+
+          <tag>$all</tag>
+          <item>facility supported by insserv to start a script after
+          all the scripts not depending on $all, at the end of the
+          boot sequence. This only work for start ordering, not stop
+          ordering. Depending on a script depending on $all will give
+          incorrect ordering, as the script depending on $all will be
+          started after the script depending on it.</item>
+          </taglist>
+          </p>
+         </sect1>
+
+
+         <sect1>
           <heading>Invocation and registration</heading>
           <p>
             Maintainers should use the abstraction layer provided by
@@ -310,8 +490,8 @@
 
           <p>
             Directly managing the /etc/rc?.d links and directly
-            invoking the <file>/etc/init.d/</file> initscripts should
-            be done only by packages providing the initscript
+            invoking the <file>/etc/init.d/</file> initscripts must only
+            be done by packages providing the initscript
             subsystem (such as <prgn>sysv-rc</prgn> and
             <prgn>file-rc</prgn>).
           </p>
@@ -414,9 +594,8 @@
 
             <p>
               Most packages will simply need to change:
-              <example compact="compact">/etc/init.d/&lt;package&gt;
-              &lt;action&gt;</example> in their <prgn>postinst</prgn>
-              and <prgn>prerm</prgn> scripts to:
+              <example compact="compact">/etc/init.d/&lt;package&gt; &lt;action&gt;</example>
+              in their <prgn>postinst</prgn> and <prgn>prerm</prgn> scripts to:
               <example compact="compact">
         if which invoke-rc.d >/dev/null 2>&1; then
                 invoke-rc.d <var>package</var> &lt;action&gt;
@@ -631,6 +810,22 @@ Reloading <var>description</var> configuration...done.
                 </example>
                 where <var>description</var> is the same as in the
                 daemon starting message.
+              </p>
+            </item>
+
+            <item>
+              <p>When the <tt>status</tt> action is called</p>
+
+              <p>
+                When the <tt>status</tt> action is called and the
+                service is running, print:
+                <example compact="compact">
+<var>Service</var> is running.
+                </example>
+                When the service is not running, print:
+                <example compact="compact">
+<var>Service</var> is not running.
+                </example>
               </p>
             </item>
           </list>
