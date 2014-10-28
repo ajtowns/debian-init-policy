@@ -60,4 +60,6 @@ systemd; if systemctl says a service doesn't support "reload", service
 will go call "/etc/init.d/foo reload", which fortunately will just call
 systemctl foo reload anyway.)"
 
+X-Interactive LSB header in init scripts --> must provide a systemd service file
+
 
