@@ -4,9 +4,6 @@ not define different behavior for different numeric sysvinit runlevels
 install init scripts into all numeric runlevels 2-5."  (Plus discussion
 about 0, 1, 6, etc.)"
 
-/lib/lsb/init-functions -- pull from
-/usr/share/doc/lsb-base/README.Debian.gz
-
 What should be included in maintainer scripts for systemd?
 
 rcS.d: ""don't".  These days, I wonder if Policy should hold new rcS

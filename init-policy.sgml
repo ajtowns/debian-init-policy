@@ -225,10 +225,10 @@
 
             <taglist>
               <tag><tt>start</tt></tag>
-              <item>start the service,</item>
+              <item>start the service</item>
 
               <tag><tt>stop</tt></tag>
-              <item>stop the service,</item>
+              <item>stop the service</item>
 
               <tag><tt>restart</tt></tag>
               <item>stop and restart the service if it's already running,
@@ -237,12 +237,12 @@
               <tag><tt>reload</tt></tag>
               <item><p>cause the configuration of the service to be
                   reloaded without actually stopping and restarting
-                  the service,</item>
+                  the service</item>
 
               <tag><tt>force-reload</tt></tag>
               <item>cause the configuration to be reloaded if the
                   service supports this, otherwise restart the
-                  service.</item>
+                  service</item>
 
               <tag><tt>status</tt></tag>
 
@@ -251,11 +251,15 @@
                   action is in effect.</footnote>, exiting with status 0
                   if if the service is running, or, if the service is not
                   running, with a status other than 0<footnote>Packages
-                  are encouraged to use the specific nonzero exit
+                  are encouraged to use the specific non-zero exit
                   statuses defined by LSB, but policy currently does
                   not require their use.  It is only required to
                   distinguish between 0 for running and not 0 for not
-                  running.</footnote>.</item>
+                  running.</footnote>. Scripts may wish to use the <tt>status_of_proc</tt>
+                  function from <tt>/lib/lsb/init-functions</tt> to implement this
+                  function, eg:
+                  <example>status_of_proc /usr/sbin/sshd sshd && exit 0 || echo $?</example>
+               </item>
             </taglist>
 
             The <tt>start</tt>, <tt>stop</tt>, <tt>restart</tt>,
@@ -292,7 +296,6 @@
             <tag>2</tag> <item>program is dead and /var/lock lock file exists</item>
             <tag>3</tag> <item>program is not running</item>
             <tag>4</tag> <item>program or service status is unknown</item>
-            <tag>100-149</tag> <item>reserved for distribution use</item>
             </taglist>
           </p>
           <p>
@@ -301,10 +304,12 @@
             of 0 on <tt>start</tt> or <tt>stop</tt>.
           </p>
           <p>
-            Error codes 100-149 are reserved for distribution use, so may be
-            used by packages if needed, however maintainers should discuss
-            the introduction of such codes first. All other codes are reserved
-            so should not be used by Debian packages. 
+            Error codes 100-149 are reserved for distribution use,
+            so may be used by packages if needed, however maintainers
+            should discuss the introduction of such codes first, eg
+            on the <tt>debian-devel</tt> or <tt>debian-policy</tt>
+            lists. All other codes are reserved, and should not be used
+            by Debian packages.
           </p>
          </sect1>
 
@@ -385,7 +390,7 @@
           to be stopped. This will often be the same set of services as
           in Required-Start.</item>
 
-          <tag>Should-Start: <var>service_1</var> <var>service_2...</var></tag> 
+          <tag>Should-Start: <var>service_1</var> <var>service_2...</var></tag>
           <item>Lists services which, if present, should be started before
           this service is started. (If these services are not present, the
           service being started may have reduced functionality, eg)</item>
@@ -393,7 +398,7 @@
           <tag>Should-Stop: <var>service_1</var> <var>service_2...</var></tag>
           <item>As per Required-Stop/Should-Start.</item>
 
-          <tag>X-Start-Before: <var>service_1</var> <var>service_2...</var></tag> 
+          <tag>X-Start-Before: <var>service_1</var> <var>service_2...</var></tag>
           <item>Lists services which, if present, should only be started after this
           service is started. This acts as if <tt>Should-Start: <var>me</var></tt>
           had been included in each of <var>service_1</var>, <var>service_2</var>'s
@@ -631,16 +636,21 @@
         </sect1>
 
         <sect1>
-        <heading>Console messages from <file>init.d</file> scripts</heading>
+        <heading>Messages from <file>init.d</file> scripts</heading>
 
         <p>
-          This section describes the formats to be used for messages
-          written to standard output by the <file>/etc/init.d</file>
-          scripts.  The intent is to improve the consistency of
-          Debian's startup and shutdown look and feel.  For this
-          reason, please look very carefully at the details.  We want
-          the messages to have the same format in terms of wording,
-          spaces, punctuation and case of letters.
+          Init scripts should provide output indicating what
+          actions are being taken, and whether they succeed or
+          fail. To ensure a flexible and consistent approach to such
+          messages, init scripts should use the log functions from
+          <prgn>/lib/lsb/init-functions</prgn>.
+        </p>
+
+        <p>
+          In order to use those functions, the package should specify a
+          dependency on <tt>lsb-base</tt>, and source the init-functions
+          script at the beginning of the init script, eg:
+          <example>. /lib/lsb/init-functions</example>
         </p>
 
         <p>
@@ -653,20 +663,12 @@
             <item>
                 The message should fit in one line (fewer than 80
                 characters), start with a capital letter and end with
-                a period (<tt>.</tt>) and line feed (<tt>"\n"</tt>).
+                a period (<tt>.</tt>).
             </item>
 
             <item>
-              If the script is performing some time consuming task in
-              the background (not merely starting or stopping a
-              program, for instance), an ellipsis (three dots:
-              <tt>...</tt>) should be output to the screen, with no
-              leading or tailing whitespace or line feeds.
-            </item>
-
-            <item>
-              The messages should appear as if the computer is telling
-              the user what it is doing (politely :-), but should not
+                The messages should appear as if the computer is telling
+                the user what it is doing (politely :-), but should not
                 mention "it" directly.  For example, instead of:
                 <example compact="compact">
 I'm starting network daemons: nfsd mountd.
@@ -676,15 +678,21 @@ I'm starting network daemons: nfsd mountd.
 Starting network daemons: nfsd mountd.
                 </example>
             </item>
+
+            <item>
+              If the script is performing some time consuming task in
+              the background (not merely starting or stopping a
+              program, for instance), an ellipsis (three dots:
+              <tt>...</tt>) should be output to the screen, with no
+              leading or tailing whitespace or line feeds.
+            </item>
           </list>
         </p>
 
         <p>
           <tt>init.d</tt> script should use the following  standard
           message formats for the situations enumerated below.
-        </p>
 
-        <p>
           <list>
             <item>
               <p>When daemons are started</p>
@@ -714,53 +722,24 @@ Starting printer spooler: lpd.
               <p>
                 This can be achieved by saying
                 <example compact="compact">
-echo -n "Starting printer spooler: lpd"
+log_daemon_msg "Starting printer spooler" "lpd"
 start-stop-daemon --start --quiet --exec /usr/sbin/lpd
-echo "."
+log_end_msg
                 </example>
-                in the script. If there are more than one daemon to
-                start, the output should look like this:
+                in the script. If there is more than one daemon to
+                start, the script should look like this:
                 <example compact="compact">
-echo -n "Starting remote file system services:"
-echo -n " nfsd"; start-stop-daemon --start --quiet nfsd
-echo -n " mountd"; start-stop-daemon --start --quiet mountd
-echo -n " ugidd"; start-stop-daemon --start --quiet ugidd
-echo "."
+log_daemon_msg "Starting remote file system services"
+log_progress_msg "nfsd"; start-stop-daemon --start --quiet nfsd
+log_progress_msg "mountd"; start-stop-daemon --start --quiet mountd
+log_progress_msg "ugidd"; start-stop-daemon --start --quiet ugidd
+log_end_msg
                 </example>
                 This makes it possible for the user to see what is
                 happening and when the final daemon has been started.
-                Care should be taken in the placement of white spaces:
-                in the example above the system administrators can
-                easily comment out a line if they don't want to start
-                a specific daemon, while the displayed message still
-                looks good.
-              </p>
-            </item>
-
-            <item>
-              <p>When a system parameter is being set</p>
-
-              <p>
-                If you have to set up different system parameters
-                during the system boot, you should use this format:
-                <example compact="compact">
-Setting <var>parameter</var> to "<var>value</var>".
-                </example>
-              </p>
-
-              <p>
-                You can use a statement such as the following to get
-                the quotes right:
-                <example compact="compact">
-echo "Setting DNS domainname to \"$domainname\"."
-                </example>
-              </p>
-
-              <p>
-                Note that the same symbol (<tt>"</tt>) <!-- " --> is used
-                for the left and right quotation marks.  A grave accent
-                (<tt>`</tt>) is not a quote character; neither is an
-                apostrophe (<tt>'</tt>).
+                (Note that it will often be better to have separate init
+                scripts for each daemon, linked together by specifying appropriate
+                dependencies)
               </p>
             </item>
 
@@ -784,6 +763,38 @@ Stopping printer spooler: lpd.
             </item>
 
             <item>
+              <p>When a system parameter is being set</p>
+
+              <p>
+                If you have to set up different system parameters
+                during the system boot, you should use this format:
+                <example compact="compact">
+Setting <var>parameter</var> to "<var>value</var>".
+                </example>
+              </p>
+
+              <p>
+                You can use a statement such as the following to get
+                the quotes right:
+                <example compact="compact">
+log_action_msg "Setting DNS domainname to \"$domainname\"."
+                </example>
+              </p>
+
+              <p>
+                Note that the same symbol (<tt>"</tt>) <!-- " --> is used
+                for the left and right quotation marks.  A grave accent
+                (<tt>`</tt>) is not a quote character; neither is an
+                apostrophe (<tt>'</tt>).
+              </p>
+
+              <p>
+                This type of message can be used for any atomic action, that is
+                not expected to take any time at all, and cannot fail.
+              </p>
+            </item>
+
+            <item>
               <p>When something is executed</p>
 
               <p>
@@ -801,11 +812,25 @@ Doing something very useful...done.
                 informed why they have to wait.  You can get this
                 behavior by saying
                 <example compact="compact">
-echo -n "Doing something very useful..."
+log_action_begin_msg "Doing something very useful"
 do_something
-echo "done."
+log_action_end_msg $?
                 </example>
                 in your script.
+              </p>
+
+              <p>
+                The first argument to <tt>log_action_end_msg</tt> is
+                either 0, indicating success (in which case "done." will
+                be output) or 1 (or otherwise non-zero) indicating failure
+                (in which case "failed." will be output). If a string is
+                provided as the second argument, it will be included in the
+                message, eg:
+
+                <example compact="compact">
+$ log_action_begin_msg "Doing something useful"; log_action_end_msg 0 "extra info"
+Doing something useful...done (extra info).
+                </example>
               </p>
             </item>
 
@@ -839,6 +864,13 @@ Reloading <var>description</var> configuration...done.
               </p>
             </item>
           </list>
+        </p>
+        <p>
+          These functions allow a special "fancy output" format which
+          will prefix the lines with a <tt>[....]</tt> and, when a daemon
+          or command succeeds or fails, fill that box in with a colored
+          <tt>[ ok ]</tt>, <tt>[warn]</tt> or <tt>[FAIL]</tt>, making it
+          easier for admins to see potential problems at a glance.
         </p>
          </sect1>
 
