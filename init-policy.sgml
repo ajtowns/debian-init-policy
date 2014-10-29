@@ -457,7 +457,7 @@
           or LDAP.</item>
 
           <tag>$portmap</tag>
-          <item>daemons providing ?SunRPC/ONCRPC portmapping service as
+          <item>daemons providing SunRPC/ONCRPC portmapping service as
           defined in RFC 1833 (if present) are running</item>
 
           <tag>$remote_fs</tag>
