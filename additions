@@ -9,9 +9,3 @@ What should be included in maintainer scripts for systemd?
 rcS.d: ""don't".  These days, I wonder if Policy should hold new rcS
 scripts to the same standard as Pre-Depends: "ask if you think you need
 to add a new one"."
-
-/etc/default: Yes please.  In particular, can we *please* put something in
-Policy advocating against enable/disable switches (that's what update-rc.d
-is for), and suggesting the creation of appropriate daemon configuration
-files upstream, with /etc/default being a last resort working around
-daemons that don't have appropriate configuration mechanisms?
