@@ -941,9 +941,8 @@ test -f <var>program-executed-later-in-script</var> || exit 0
             There used to be another directory, <file>/etc/rc.boot</file>,
             which contained scripts which were run once per machine
             boot. This has been deprecated in favour of links from
-            <file>/etc/rcS.d</file> to files in <file>/etc/init.d</file> as
-            described in <ref id="/etc/init.d">.  Packages must not
-            place files in <file>/etc/rc.boot</file>.
+            <file>/etc/rcS.d</file> to files in <file>/etc/init.d</file>.
+            Packages must not place files in <file>/etc/rc.boot</file>.
           </p>
         </sect1>
         <sect1>
@@ -1170,113 +1169,4 @@ fi
     </sect>
   </chapt>
 
-  <chapt id="legacy">
-     <heading>Legacy documentation imported from Debian Policy</heading>
-
-      <sect id="sysvinit">
-        <heading>System run levels and <file>init.d</file> scripts</heading>
-
-        <sect1 id="/etc/init.d">
-          <heading>Introduction</heading>
-
-          <p>
-            These scripts are referenced by symbolic links in the
-            <file>/etc/rc<var>n</var>.d</file> directories.  When changing
-            runlevels, <prgn>init</prgn> looks in the directory
-            <file>/etc/rc<var>n</var>.d</file> for the scripts it should
-            execute, where <tt><var>n</var></tt> is the runlevel that
-            is being changed to, or <tt>S</tt> for the boot-up
-            scripts.
-          </p>
-
-          <p>
-            The names of the links all have the form
-            <file>S<var>mm</var><var>script</var></file> or
-            <file>K<var>mm</var><var>script</var></file> where
-            <var>mm</var> is a two-digit number and <var>script</var>
-            is the name of the script (this should be the same as the
-            name of the actual script in <file>/etc/init.d</file>).
-          </p>
-
-          <p>
-            When <prgn>init</prgn> changes runlevel first the targets
-            of the links whose names start with a <tt>K</tt> are
-            executed, each with the single argument <tt>stop</tt>,
-            followed by the scripts prefixed with an <tt>S</tt>, each
-            with the single argument <tt>start</tt>.  (The links are
-            those in the <file>/etc/rc<var>n</var>.d</file> directory
-            corresponding to the new runlevel.)  The <tt>K</tt> links
-            are responsible for killing services and the <tt>S</tt>
-            link for starting services upon entering the runlevel.
-          </p>
-
-          <p>
-            For example, if we are changing from runlevel 2 to
-            runlevel 3, init will first execute all of the <tt>K</tt>
-            prefixed scripts it finds in <file>/etc/rc3.d</file>, and then
-            all of the <tt>S</tt> prefixed scripts in that directory.
-            The links starting with <tt>K</tt> will cause the
-            referred-to file to be executed with an argument of
-            <tt>stop</tt>, and the <tt>S</tt> links with an argument
-            of <tt>start</tt>.
-          </p>
-
-          <p>
-            The two-digit number <var>mm</var> is used to determine
-            the order in which to run the scripts: low-numbered links
-            have their scripts run first.  For example, the
-            <tt>K20</tt> scripts will be executed before the
-            <tt>K30</tt> scripts.  This is used when a certain service
-            must be started before another.  For example, the name
-            server <prgn>bind</prgn> might need to be started before
-            the news server <prgn>inn</prgn> so that <prgn>inn</prgn>
-            can set up its access lists.  In this case, the script
-            that starts <prgn>bind</prgn> would have a lower number
-            than the script that starts <prgn>inn</prgn> so that it
-            runs first:
-            <example compact="compact">
-/etc/rc2.d/S17bind
-/etc/rc2.d/S70inn
-            </example>
-          </p>
-
-          <p>
-            The two runlevels 0 (halt) and 6 (reboot) are slightly
-            different.  In these runlevels, the links with an
-            <tt>S</tt> prefix are still called after those with a
-            <tt>K</tt> prefix, but they too are called with the single
-            argument <tt>stop</tt>.
-          </p>
-        </sect1>
-
-      </sect>
-
-
-      <sect id="alternateinit">
-        <heading>Alternate init systems</heading>
-        <p>
-          A number of other init systems are available now in Debian that
-          can be used in place of <package>sysvinit</package>.  Alternative
-          init implementations must support running SysV init scripts as
-          described at <ref id="sysvinit"> for compatibility.
-        </p>
-        <p>
-          Packages may integrate with these replacement init systems by
-          providing implementation-specific configuration information about
-          how and when to start a service or in what order to run certain
-          tasks at boot time.  However, any package integrating with other
-          init systems must also be backwards-compatible with
-          <package>sysvinit</package> by providing a SysV-style init script
-          with the same name as and equivalent functionality to any
-          init-specific job, as this is the only start-up configuration
-          method guaranteed to be supported by all init implementations.  An
-          exception to this rule is scripts or jobs provided by the init
-          implementation itself; such jobs may be required for an
-          implementation-specific equivalent of the <file>/etc/rcS.d/</file>
-          scripts and may not have a one-to-one correspondence with the init
-          scripts.
-        </p>
-      </sect>
-
-  </chapt>
 </book>
