@@ -617,11 +617,7 @@
               <example compact="compact">/etc/init.d/&lt;package&gt; &lt;action&gt;</example>
               in their <prgn>postinst</prgn> and <prgn>prerm</prgn> scripts to:
               <example compact="compact">
-        if which invoke-rc.d >/dev/null 2>&1; then
                 invoke-rc.d <var>package</var> &lt;action&gt;
-        else
-                /etc/init.d/<var>package</var> &lt;action&gt;
-        fi
               </example>
             </p>
 
