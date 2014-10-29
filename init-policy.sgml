@@ -93,10 +93,15 @@
       <p>
       System administrators may provide a
       <prgn>/usr/sbin/policy-rc.d</prgn> to alter the
-      default behaviour of <prgn>update-rc.d</prgn>
-      and <prgn>invoke-rc.d</prgn>. Implementations of
-      <prgn>policy-rc.d</prgn> are supplied by some packages.
+      default behaviour of <prgn>invoke-rc.d</prgn>. Note that
+      <prgn>update-rc.d</prgn> does not consult <prgn>policy-rc.d</prgn>.
       </p>
+
+      <p>
+      A handful of packages in the archive supply implementations of
+      <prgn>policy-rc.d</prgn>.
+      </p>
+
       <p>
       The <prgn>policy-rc.d</prgn> script is called using the following
       convention:
