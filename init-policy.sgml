@@ -177,8 +177,8 @@
     <sect id="background">
       <heading>Background</heading>
           <p>
-            There are at least two different, yet functionally
-            equivalent, ways of launching daemons at boot time. The
+            There are a variety of different ways of
+            launching daemons at boot time. The
             traditional approach uses executable scripts located in
             <file>/etc/init.d</file>, however newer solutions such as
             <prgn>systemd</prgn> and <prgn>upstart</prgn> use a more
