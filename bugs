@@ -27,6 +27,13 @@ says a service doesn't support "reload", service will go call
 "/etc/init.d/foo reload", which fortunately will just call systemctl
 foo reload anyway.)"
 
+"sure would be nice if systemd could get user input; that seems like a
+big gap. sure systemd might have to construct some method to talk to the
+user past boot time; that's just mechanism, which doesn't seem impossible
+to me. heck, embed it in getty/xdm if you have to"
+ cf: http://www.freedesktop.org/wiki/Software/systemd/PasswordAgents/
+     http://lists.freedesktop.org/archives/systemd-devel/2011-July/002790.html
+
 
 
 
