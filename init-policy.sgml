@@ -10,7 +10,7 @@
     <version>version &version;, &date;</version>
 
     <abstract>
-      This manual describes the policy requirements for init systems
+      This manual describes the requirements for init systems
       and init scripts within the Debian distirbution.
     </abstract>
 
@@ -89,7 +89,7 @@
     </sect>
 
     <sect id="policyrcd">
-      <heading>Using policy-rc.d to set daemon policy</heading>
+      <heading>Using policy-rc.d to set daemon policy on install/upgrade</heading>
       <p>
       System administrators may provide a
       <prgn>/usr/sbin/policy-rc.d</prgn> to alter the
@@ -175,6 +175,77 @@
       embedded blanks.
       </p>
     </sect>
+
+    <sect>
+      <heading>Different Init Models</heading>
+
+      <p>A variety of models for loading and monitoring daemons and services
+      have been created, and are supported on Debian systems.
+      </p>
+
+      <sect1>
+      <heading>systemd</heading>
+      <p>systemd is the default init system as of Debian 8 (jessie). It
+      has a variety of methods of activating daemons/services, including
+      socket-based activation (started when a socket is accessed),
+      bus-based activation (started when a client attempts to communicate
+      with it over D-Bus), device-based activation (started when certain
+      hardware is plugged in or otherwise becomes available), and others.
+      </p>
+
+      <p>systemd uses "unit" files to determine how to manage
+      services and the system as a whole. Units can be provided by
+      packages (via <file>/lib/systemd/system/</file>), the admin (via
+      <file>/etc/systemd/system/</file>), or programmatically by systemd
+      "generators" (via <file>/run/systemd/system/</file>).
+      </p>
+
+      <p>systemd determines what services to start via a "target" unit. A
+      target unit is a way of collecting a group of units together
+      via dependencies. The default target is <tt>graphical.target</tt> which
+      in turn requires <tt>multi-user.target</tt>.</p>
+
+      <p>systemd provides a <prgn>systemctl</prgn> command for controlling
+      services at runtime.<p>
+
+      <p>Installing the <tt>systemd-sysv</tt> package will set systemd as
+      the default method for booting the system and starting services.
+      </p>
+      </sect1>
+
+      <sect1>
+      <heading>SysV Init</heading>
+      <p>The traditional method of starting a Debian system was
+      System V style init. This involves running a series of scripts from
+      <file>/etc/init.d</file> to start and stop services.
+      </p>
+
+      <p>SysV uses the concept of "runlevels" to allow a system to be
+      in different states, corresponding to a different combination
+      of running services. In Debian, runlevels 2, 3, 4 and 5 are by
+      default treated as equivalent, and the default runlevel is 2.
+      </p>
+
+      <p>Scripts are associated with a runlevel by placing symlinks in
+      the <file>/etc/rcN.d/</file> corresponding with the runlevel, and
+      prefixed with <tt>S<var>NN</var></tt> or <tt>K<var>NN</var></tt>
+      denoting whether the service should be started (S) or killed
+      (K) when entering this runlevel, and the order in which the
+      services should be started or stopped (<tt><var>NN</var></tt>
+      from <tt>00</tt> to <tt>99</tt>). This ordering is set by the
+      <tt>insserv</tt> program based on LSB-style dependency headers
+      within the init scripts themselves.
+      </p>
+
+      <p>Installing the <tt>sysvinit-core</tt> package will set SysV-style
+      init as the default method for booting the system and starting
+      services.
+      </p>
+
+      <p>Installing <tt>file-rc</tt> will change the SysV-init system from
+      using symlinks to associate scripts with runlevels, to using a single
+      text-based configuration file instead.</p>
+      </sect1>
   </chapt>
 
   <chapt id="daemonmaint">
@@ -188,21 +259,6 @@
             <file>/etc/init.d</file>, however newer solutions such as
             <prgn>systemd</prgn> and <prgn>upstart</prgn> use a more
             descriptive approach to manage daemons.
-          </p>
-
-          <p>
-            Even in the case of traditional init scripts, there are
-            multiple ways of handling these scripts.  For the sake
-            of simplicity, this document describes only the symbolic
-            link method. However, it must not be assumed by maintainer
-            scripts that this method is being used, and any automated
-            manipulation of the various runlevel behaviors by
-            maintainer scripts must be performed using
-            <prgn>update-rc.d</prgn> as described below and not by
-            manually installing or removing symlinks.  For information
-            on the implementation details of the other method,
-            implemented in the <tt>file-rc</tt> package, please refer
-            to the documentation of that package.
           </p>
     </sect>
 
