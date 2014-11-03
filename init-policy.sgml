@@ -1215,6 +1215,8 @@ fi
       "hooking"; it just lives in sysvinit-utils and has specific support for
       sysvinit, upstart, and systemd.
       </p>
+      <p>Packages providing an implentation of policy-rc.d must use the alternatives
+      system to do so.</p>
     <sect id="initpkgnames">
       <heading>Related packages</heading>
     </sect>
