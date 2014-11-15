@@ -254,12 +254,29 @@
     <sect id="background">
       <heading>Background</heading>
           <p>
-            There are a variety of different ways of
-            launching daemons at boot time. The
-            traditional approach uses executable scripts located in
+            There are a variety of different ways of launching daemons
+            at boot time. The traditional approach, known as
+            SysV-style init, uses executable scripts located in
             <file>/etc/init.d</file>, however newer solutions such as
             <prgn>systemd</prgn> and <prgn>upstart</prgn> use a more
             descriptive approach to manage daemons.
+          </p>
+          <p>
+            In Debian, the default init system for Linux architectures
+            is <prgn>systemd</prgn>, and as a consequence, packages
+            providing daemons should work under systemd. This can be
+            achieved either by providing a native systemd unit file,
+            or by providing an LSB-style init.d script making use of
+            systemd's sysv compatability.
+          </p>
+          <p>
+            Providing a unit file is often a more powerful approach,
+            offering more fine-grained management of the service.  On
+            the other hand, providing is necessary in order for the
+            daemon to work with other kernels (where systemd is not
+            available) and alternative init systems, so it may be
+            easier to just maintain an init script, rather than an
+            init script and a unit file.
           </p>
     </sect>
 
