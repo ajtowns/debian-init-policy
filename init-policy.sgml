@@ -271,17 +271,20 @@
           </p>
           <p>
             Providing a unit file is often a more powerful approach,
-            offering more fine-grained management of the service.  On
-            the other hand, providing is necessary in order for the
-            daemon to work with other kernels (where systemd is not
-            available) and alternative init systems, so it may be
-            easier to just maintain an init script, rather than an
-            init script and a unit file.
+            offering more fine-grained management of the service, so
+            in general this is recommended. Ideally, a unit file will
+            be common across distributions, and can thus be maintained
+            upstream. On the other hand, providing an init script is
+            necessary in order for the daemon to work with alternative
+            init systems and non-Linux kernels (where systemd is not
+            available), so if upstream does not provide an acceptable
+            unit file, it may be easier to just maintain an init script,
+            rather than an init script and a unit file.
           </p>
     </sect>
 
     <sect id="systemdunits">
-      <heading>systemd unit files</heading>
+      <heading>systemd support</heading>
 
       <sect1>
         <heading>unit files</heading>
@@ -292,35 +295,6 @@
         <p>
         <list>
         <item>
-          When you are installing a systemd service file alongside of your
-          SysV init script, you should name it correspondingly. E.g. for
-          /etc/init.d/apache2 the corresponding service file should be
-          named /lib/systemd/system/apache2.service. This way, systemd
-          will automatically prefer the native service file over the SysV
-          init script and use that to start the service. If the names do
-          not match, say your service file is provided by upstream and
-          named NetworkManager.service and your existing SysV init script
-          is called /etc/init.d/network-manager, you can either rename
-          one of the two or you simply use an Alias=. This instruction
-          tells systemctl enable to create a symlink. Augment the service
-          file like this:
-
-<example>
-[Install]
-Alias=network-manager.service
-</example>
-
-           If your service file is not provided by upstream and you ship
-           it as part of your debian package, name it debian/$pkg.service
-           and dh_installinit will install it to the correct location. For
-           more information please refer to the dh_installinit(1)
-           man page.
-        </item><item>
-           If a package ships a unit and a corresponding init script, the
-           init script must source <file>/lib/lsb/init-functions</file>
-           so that running the init script gets redirected to systemctl
-           and systemd can continue to manage the service.
-        </item><item>
 Packages MUST NOT ship units, tmpfiles configuration, or other systemd  configuration in /etc; they MUST ship it in the systemwide locations in  /lib instead.  Configuration of systemd components in /etc is reserved  exclusively for the system administrator, as it overrides corresponding  configuration in /usr.
         </item><item>
 Units, or code invoked synchronously from units, MUST NOT invoke other services using systemctl, service, or similar tools; doing so may lead to deadlock.  Such invocations typically indicate the need for a dependency, instead.
@@ -374,13 +348,48 @@ Avoid using Accept=yes in .socket files, because service(8) cannot stop that ser
         </list>
         </p>
       </sect1>
+      <sect1>
+        <heading>unit files and init scripts</heading>
+        <p>
+        <list>
+        <item>
+          When you are installing a systemd service file alongside of your
+          SysV init script, you should name it correspondingly. E.g. for
+          /etc/init.d/apache2 the corresponding service file should be
+          named /lib/systemd/system/apache2.service. This way, systemd
+          will automatically prefer the native service file over the SysV
+          init script and use that to start the service. If the names do
+          not match, say your service file is provided by upstream and
+          named NetworkManager.service and your existing SysV init script
+          is called /etc/init.d/network-manager, you can either rename
+          one of the two or you simply use an Alias=. This instruction
+          tells systemctl enable to create a symlink. Augment the service
+          file like this:
 
+<example>
+[Install]
+Alias=network-manager.service
+</example>
+
+           If your service file is not provided by upstream and you ship
+           it as part of your debian package, name it debian/$pkg.service
+           and dh_installinit will install it to the correct location. For
+           more information please refer to the dh_installinit(1)
+           man page.
+        </item><item>
+           If a package ships a unit and a corresponding init script, the
+           init script must source <file>/lib/lsb/init-functions</file>
+           so that running the init script gets redirected to systemctl
+           and systemd can continue to manage the service.
+        </item>
+        <item>Maintainer SHOULD NOT rename .service files but use symlink instead to mask LSB scripts</item>
+</list>
+      </sect1>
       <sect1>
         <heading>maintainer scripts</heading>
         <p>
         <list>
         <item>Maintainer scripts MUST use deb-systemd-helper and deb-systemd-invoke.</item>
-        <item>Maintainer SHOULD NOT rename .service files but use symlink instead to mask LSB scripts</item>
         <item>Socket units MUST be stopped at the right time while upgrading and removing the package. (When is the right time? Can/does dh-systemd do this automatically?)</item>
         </list>
         </p>
