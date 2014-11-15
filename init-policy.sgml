@@ -250,6 +250,7 @@
 
   <chapt id="daemonmaint">
     <heading>Maintaining a Daemon</heading>
+
     <sect id="background">
       <heading>Background</heading>
           <p>
@@ -260,6 +261,140 @@
             <prgn>systemd</prgn> and <prgn>upstart</prgn> use a more
             descriptive approach to manage daemons.
           </p>
+    </sect>
+
+    <sect id="systemdunits">
+      <heading>systemd unit files</heading>
+
+      <sect1>
+        <heading>unit files</heading>
+        <p>
+        Example unit files are available at <url id="https://wiki.debian.org/systemd/Packaging">.
+        </p>
+
+        <p>
+        <list>
+        <item>
+          When you are installing a systemd service file alongside of your
+          SysV init script, you should name it correspondingly. E.g. for
+          /etc/init.d/apache2 the corresponding service file should be
+          named /lib/systemd/system/apache2.service. This way, systemd
+          will automatically prefer the native service file over the SysV
+          init script and use that to start the service. If the names do
+          not match, say your service file is provided by upstream and
+          named NetworkManager.service and your existing SysV init script
+          is called /etc/init.d/network-manager, you can either rename
+          one of the two or you simply use an Alias=. This instruction
+          tells systemctl enable to create a symlink. Augment the service
+          file like this:
+
+<example>
+[Install]
+Alias=network-manager.service
+</example>
+
+           If your service file is not provided by upstream and you ship
+           it as part of your debian package, name it debian/$pkg.service
+           and dh_installinit will install it to the correct location. For
+           more information please refer to the dh_installinit(1)
+           man page.
+        </item><item>
+           If a package ships a unit and a corresponding init script, the
+           init script must source <file>/lib/lsb/init-functions</file>
+           so that running the init script gets redirected to systemctl
+           and systemd can continue to manage the service.
+        </item><item>
+Packages MUST NOT ship units, tmpfiles configuration, or other systemd  configuration in /etc; they MUST ship it in the systemwide locations in  /lib instead.  Configuration of systemd components in /etc is reserved  exclusively for the system administrator, as it overrides corresponding  configuration in /usr.
+        </item><item>
+Units, or code invoked synchronously from units, MUST NOT invoke other services using systemctl, service, or similar tools; doing so may lead to deadlock.  Such invocations typically indicate the need for a dependency, instead.
+        </item><item>
+Packages must not override services from other packages, or install drop-ins modifying services from other packages, without coordination with those packages.
+        </item><item>
+Units SHOULD NOT use Type=forking or PIDFile; instead, units should invoke daemons with options that tell them to remain in the foreground.
+        </item><item>
+Units SHOULD run with minimal privileges: let systemd invoke the daemon as a regular user, rather than invoking it as root and letting it drop privileges.
+        </item><item>
+Units capable of running with NoNewPrivileges=yes MUST use NoNewPrivileges=yes.  (Unless setuid(2) or running suid programs is actually needed.)
+    Beware: it breaks sending mail with Postfix.  (Perhaps postfix and other implementations of sendmail should connect to port 25 or a UNIX socket, rather than using setuid/setgid and directly dropping files into privileged locations? No, because the whole point of the maildrop directory is to allow queueing mail when the daemon is not running.)
+
+    How does this interact with LSMs like AppArmor? The documentation states:
+
+        "Be careful, though: LSMs might also not tighten constraints on exec
+         in no_new_privs mode.  (This means that setting up a general-purpose
+         service launcher to set no_new_privs before execing daemons may
+         interfere with LSM-based sandboxing.)"
+        </item><item>
+Units that run with elevated privileges SHOULD use CapabilityBoundingSet.
+    (Not mandatory because creating a policy may be hard.)
+    (And encouraging using SystemCallFilter would be nice too.)
+        </item><item>
+Units MUST use Restart=on-failure or Restart=on-abnormal, as appropriate.
+    FIXME: clarify how to choose this parameter.
+        </item><item>
+Units invoking services that do not require access to networks other than localhost SHOULD use PrivateNetwork. Note that some actions may unexpectedly require network access, such as resolving non-system users or groups via NSS.
+    But this only matters for network daemons which listen on external interfaces, since local users already have access to the network interfaces.
+    And does not work for anything which needs to resolve domains or users (think about LDAP/NIS).
+    Only for non-system users; system users are already required to exist locally.
+    Or use syslog. There are so many things that could break that I do not feel confident enough to even use a SHOULD.
+    I've changed it to something less specific, and just recommend using it if possible.
+        </item><item>
+Units SHOULD use PrivateTmp (if the daemon uses tempfiles) and PrivateDevices.
+        </item><item>
+Units SHOULD use ProtectHome and ProtectSystem (full or on) (requires systemd >= 214)
+        </item><item>
+Units SHOULD use socket and/or bus activation wherever possible.  Socket/bus activation avoids the need to declare and maintain dependencies, instead allowing daemons and their dependencies to launch in parallel.  A package MAY allow the activated unit to launch on demand and exit when unused, or MAY launch it proactively at system startup, depending on user-desired behavior.
+        </item><item>
+(behaviour for /etc/default files)
+        </item><item>
+Programs SHOULD handle the dynamic addition and removal of network devices and addresses.  (Note that programs listening on all interfaces or on localhost only  will work by default, and programs configured to listen on a specific  address can use IP_FREEBIND rather than waiting for configuration of  that address.) Units for software that does not support dynamic addition and removal of network devices and addresses MUST depend on network-online.target, which blocks until after attempting to bring up all system-wide networks.
+        </item><item>
+Units MUST either omit the StandardOutput and StandardError directives, or specify them as "null" if the invoked program produces excessive uninteresting output on standard output or standard error.  Units MUST NOT set any other value for StandardOutput or StandardError; doing so overrides the system administrator's preferred configuration from DefaultStandardOutput and DefaultStandardError in systemd-system.conf.
+        </item><item>
+Packages shipping a unit that specify a Conflicts= against unit files shipped as part of systemd MUST NOT break any software relying on the interface provided by that unit file. (Does this entirely make sense? Does it just mean packages can't ever break interfaces provided by systemd unit files, even if there's a Conflicts= specified?))
+        </item><item>
+Avoid using Accept=yes in .socket files, because service(8) cannot stop that service correctly. E.g. you have approx.socket and approx@.service, which gets expanded to approx@1-::1:9999-::1:44903.service, then service approx stop will not work.
+        </item>
+        </list>
+        </p>
+      </sect1>
+
+      <sect1>
+        <heading>maintainer scripts</heading>
+        <p>
+        <list>
+        <item>Maintainer scripts MUST use deb-systemd-helper and deb-systemd-invoke.</item>
+        <item>Maintainer SHOULD NOT rename .service files but use symlink instead to mask LSB scripts</item>
+        <item>Socket units MUST be stopped at the right time while upgrading and removing the package. (When is the right time? Can/does dh-systemd do this automatically?)</item>
+        </list>
+        </p>
+      </sect1>
+
+      <sect1>
+        <heading>dh-systemd</heading>
+        <p>Maintainers will usually want to use dh-systemd rather than ensuring
+        their maintainer scripts do the right thing manually. If your pakcages
+        us dh-systemd, you will need to:
+        <list>
+        <item>Add Build-Depends on <tt>dh-systemd (>= 1.5)</tt>.
+        <item>Units SHOULD be installed with --restart-after-upgrade. (As long as the package will not break, but most will work fine.)</item>
+        <item>For socket and D-Bus activated services we recommed to use --restart-after-upgrade if your daemon supports that. If your daemon uses the default behaviour (stop in prerm, start in postinst), mask the .service file, so the service is not started on incoming requests while the upgrade is ongoing.</item>
+        </list>
+        </p>
+      </sect1>
+
+      <sect1>
+        <heading>Dependencies</heading>
+        <p>
+        <list>
+        <item>
+FIXME: Packages which ship both a unit file and an /etc/init.d/ service MUST depend on ... / recommend ...
+        </item><item>
+FIXME: Packages which ship only a systemd unit file, or otherwise depend on systemd, MUST depend on ...  Note that packages SHOULD accept patches adding support for other init systems, if feasible and maintainable. Note that this means the service will not be compatible with sysvinit or other init systems. In most cases having an init script is the sensible course of action.
+        </item><item>
+Packages using functionality of systemd only present introduced in version V of systemd, must either specify "Depends: systemd (>= V)" if only a unit file is provided, or specify a "Breaks: systemd (< V)". In order to avoid confusing apt, packages should in general only use features of systemd that are already present in the version of systemd already present in the testing suite.
+        </item>
+        </list>
+        </p>
     </sect>
 
     <sect id="init.d">
@@ -1011,140 +1146,6 @@ test -f <var>program-executed-later-in-script</var> || exit 0
             <file>/etc/init.d/skeleton</file>.
           </p>
         </sect1>
-    </sect>
-
-    <sect id="systemdunits">
-      <heading>systemd unit files</heading>
-
-      <sect1>
-        <heading>unit files</heading>
-        <p>
-        Example unit files are available at <url id="https://wiki.debian.org/systemd/Packaging">.
-        </p>
-
-        <p>
-        <list>
-        <item>
-          When you are installing a systemd service file alongside of your
-          SysV init script, you should name it correspondingly. E.g. for
-          /etc/init.d/apache2 the corresponding service file should be
-          named /lib/systemd/system/apache2.service. This way, systemd
-          will automatically prefer the native service file over the SysV
-          init script and use that to start the service. If the names do
-          not match, say your service file is provided by upstream and
-          named NetworkManager.service and your existing SysV init script
-          is called /etc/init.d/network-manager, you can either rename
-          one of the two or you simply use an Alias=. This instruction
-          tells systemctl enable to create a symlink. Augment the service
-          file like this:
-
-<example>
-[Install]
-Alias=network-manager.service
-</example>
-
-           If your service file is not provided by upstream and you ship
-           it as part of your debian package, name it debian/$pkg.service
-           and dh_installinit will install it to the correct location. For
-           more information please refer to the dh_installinit(1)
-           man page.
-        </item><item>
-           If a package ships a unit and a corresponding init script, the
-           init script must source <file>/lib/lsb/init-functions</file>
-           so that running the init script gets redirected to systemctl
-           and systemd can continue to manage the service.
-        </item><item>
-Packages MUST NOT ship units, tmpfiles configuration, or other systemd  configuration in /etc; they MUST ship it in the systemwide locations in  /lib instead.  Configuration of systemd components in /etc is reserved  exclusively for the system administrator, as it overrides corresponding  configuration in /usr.
-        </item><item>
-Units, or code invoked synchronously from units, MUST NOT invoke other services using systemctl, service, or similar tools; doing so may lead to deadlock.  Such invocations typically indicate the need for a dependency, instead.
-        </item><item>
-Packages must not override services from other packages, or install drop-ins modifying services from other packages, without coordination with those packages.
-        </item><item>
-Units SHOULD NOT use Type=forking or PIDFile; instead, units should invoke daemons with options that tell them to remain in the foreground.
-        </item><item>
-Units SHOULD run with minimal privileges: let systemd invoke the daemon as a regular user, rather than invoking it as root and letting it drop privileges.
-        </item><item>
-Units capable of running with NoNewPrivileges=yes MUST use NoNewPrivileges=yes.  (Unless setuid(2) or running suid programs is actually needed.)
-    Beware: it breaks sending mail with Postfix.  (Perhaps postfix and other implementations of sendmail should connect to port 25 or a UNIX socket, rather than using setuid/setgid and directly dropping files into privileged locations? No, because the whole point of the maildrop directory is to allow queueing mail when the daemon is not running.)
-
-    How does this interact with LSMs like AppArmor? The documentation states:
-
-        "Be careful, though: LSMs might also not tighten constraints on exec
-         in no_new_privs mode.  (This means that setting up a general-purpose
-         service launcher to set no_new_privs before execing daemons may
-         interfere with LSM-based sandboxing.)"
-        </item><item>
-Units that run with elevated privileges SHOULD use CapabilityBoundingSet.
-    (Not mandatory because creating a policy may be hard.)
-    (And encouraging using SystemCallFilter would be nice too.)
-        </item><item>
-Units MUST use Restart=on-failure or Restart=on-abnormal, as appropriate.
-    FIXME: clarify how to choose this parameter.
-        </item><item>
-Units invoking services that do not require access to networks other than localhost SHOULD use PrivateNetwork. Note that some actions may unexpectedly require network access, such as resolving non-system users or groups via NSS.
-    But this only matters for network daemons which listen on external interfaces, since local users already have access to the network interfaces.
-    And does not work for anything which needs to resolve domains or users (think about LDAP/NIS).
-    Only for non-system users; system users are already required to exist locally.
-    Or use syslog. There are so many things that could break that I do not feel confident enough to even use a SHOULD.
-    I've changed it to something less specific, and just recommend using it if possible.
-        </item><item>
-Units SHOULD use PrivateTmp (if the daemon uses tempfiles) and PrivateDevices.
-        </item><item>
-Units SHOULD use ProtectHome and ProtectSystem (full or on) (requires systemd >= 214)
-        </item><item>
-Units SHOULD use socket and/or bus activation wherever possible.  Socket/bus activation avoids the need to declare and maintain dependencies, instead allowing daemons and their dependencies to launch in parallel.  A package MAY allow the activated unit to launch on demand and exit when unused, or MAY launch it proactively at system startup, depending on user-desired behavior.
-        </item><item>
-(behaviour for /etc/default files)
-        </item><item>
-Programs SHOULD handle the dynamic addition and removal of network devices and addresses.  (Note that programs listening on all interfaces or on localhost only  will work by default, and programs configured to listen on a specific  address can use IP_FREEBIND rather than waiting for configuration of  that address.) Units for software that does not support dynamic addition and removal of network devices and addresses MUST depend on network-online.target, which blocks until after attempting to bring up all system-wide networks.
-        </item><item>
-Units MUST either omit the StandardOutput and StandardError directives, or specify them as "null" if the invoked program produces excessive uninteresting output on standard output or standard error.  Units MUST NOT set any other value for StandardOutput or StandardError; doing so overrides the system administrator's preferred configuration from DefaultStandardOutput and DefaultStandardError in systemd-system.conf.
-        </item><item>
-Packages shipping a unit that specify a Conflicts= against unit files shipped as part of systemd MUST NOT break any software relying on the interface provided by that unit file. (Does this entirely make sense? Does it just mean packages can't ever break interfaces provided by systemd unit files, even if there's a Conflicts= specified?))
-        </item><item>
-Avoid using Accept=yes in .socket files, because service(8) cannot stop that service correctly. E.g. you have approx.socket and approx@.service, which gets expanded to approx@1-::1:9999-::1:44903.service, then service approx stop will not work.
-        </item>
-        </list>
-        </p>
-      </sect1>
-
-      <sect1>
-        <heading>maintainer scripts</heading>
-        <p>
-        <list>
-        <item>Maintainer scripts MUST use deb-systemd-helper and deb-systemd-invoke.</item>
-        <item>Maintainer SHOULD NOT rename .service files but use symlink instead to mask LSB scripts</item>
-        <item>Socket units MUST be stopped at the right time while upgrading and removing the package. (When is the right time? Can/does dh-systemd do this automatically?)</item>
-        </list>
-        </p>
-      </sect1>
-
-      <sect1>
-        <heading>dh-systemd</heading>
-        <p>Maintainers will usually want to use dh-systemd rather than ensuring
-        their maintainer scripts do the right thing manually. If your pakcages
-        us dh-systemd, you will need to:
-        <list>
-        <item>Add Build-Depends on <tt>dh-systemd (>= 1.5)</tt>.
-        <item>Units SHOULD be installed with --restart-after-upgrade. (As long as the package will not break, but most will work fine.)</item>
-        <item>For socket and D-Bus activated services we recommed to use --restart-after-upgrade if your daemon supports that. If your daemon uses the default behaviour (stop in prerm, start in postinst), mask the .service file, so the service is not started on incoming requests while the upgrade is ongoing.</item>
-        </list>
-        </p>
-      </sect1>
-
-      <sect1>
-        <heading>Dependencies</heading>
-        <p>
-        <list>
-        <item>
-FIXME: Packages which ship both a unit file and an /etc/init.d/ service MUST depend on ... / recommend ...
-        </item><item>
-FIXME: Packages which ship only a systemd unit file, or otherwise depend on systemd, MUST depend on ...  Note that packages SHOULD accept patches adding support for other init systems, if feasible and maintainable. Note that this means the service will not be compatible with sysvinit or other init systems. In most cases having an init script is the sensible course of action.
-        </item><item>
-Packages using functionality of systemd only present introduced in version V of systemd, must either specify "Depends: systemd (>= V)" if only a unit file is provided, or specify a "Breaks: systemd (< V)". In order to avoid confusing apt, packages should in general only use features of systemd that are already present in the version of systemd already present in the testing suite.
-        </item>
-        </list>
-        </p>
     </sect>
 
     <sect id="upstartjobs">
