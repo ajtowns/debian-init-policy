@@ -1,124 +1,106 @@
-Best practices for systemd support in Debian packages
-* Packages SHOULD use dh-systemd.
-* Maintainer scripts MUST use deb-systemd-helper and deb-systemd-invoke.
-* Maintainer SHOULD NOT rename .service files but use symlink instead to mask LSB scripts
-* Units SHOULD be installed with --restart-after-upgrade.
+ :Best practices for systemd support in Debian packages
 
-    (As long as the package will not break, but most will work fine.)
+* Packages SHOULD use dh-systemd.
+
+* Maintainer scripts MUST use deb-systemd-helper and deb-systemd-invoke.
+
+* Maintainer SHOULD NOT rename .service files but use symlink instead to mask LSB scripts
+ 
+* Units SHOULD be installed with --restart-after-upgrade
+(As long as the package will not break, but most will work fine.)
 
 * Units SHOULD NOT use Type=forking or PIDFile; instead, units should invoke daemons with options that tell them to remain in the foreground.
+
 * Units capable of running with NoNewPrivileges=yes MUST use NoNewPrivileges=yes.
-
-    (Unless setuid(2) or running suid programs is actually needed.)
-
-    Beware: it breaks sending mail with Postfix.  (Perhaps postfix and other implementations of sendmail should connect to port 25 or a UNIX socket, rather than using setuid/setgid and directly dropping files into privileged locations? No, because the whole point of the maildrop directory is to allow queueing mail when the daemon is not running.)
-
-    How does this interact with LSMs like AppArmor? The documentation states:
-
-        "Be careful, though: LSMs might also not tighten constraints on exec
-
-         in no_new_privs mode.  (This means that setting up a general-purpose
-
-         service launcher to set no_new_privs before execing daemons may
-
-         interfere with LSM-based sandboxing.)"
+(Unless setuid(2) or running suid programs is actually needed.)
+Beware: it breaks sending mail with Postfix.  (Perhaps postfix and other implementations of sendmail should connect to port 25 or a UNIX socket, rather than using setuid/setgid and directly dropping files into privileged locations? No, because the whole point of the maildrop directory is to allow queueing mail when the daemon is not running.)
+How does this interact with LSMs like AppArmor? The documentation states:
+    "Be careful, though: LSMs might also not tighten constraints on exec
+     in no_new_privs mode.  (This means that setting up a general-purpose
+     service launcher to set no_new_privs before execing daemons may
+     interfere with LSM-based sandboxing.)"
 
 * Units SHOULD run with minimal privileges: let systemd invoke the daemon as a regular user, rather than invoking it as root and letting it drop privileges.
+
 * Units that run with elevated privileges SHOULD use CapabilityBoundingSet.
-
-    (Not mandatory because creating a policy may be hard.)
-
-    (And encouraging using SystemCallFilter would be nice too.)
+(Not mandatory because creating a policy may be hard.)
+(And encouraging using SystemCallFilter would be nice too.)
 
 * Units MUST use Restart=on-failure or Restart=on-abnormal, as appropriate.
-
-    FIXME: clarify how to choose this parameter.
+FIXME: clarify how to choose this parameter.
 
 * Units invoking services that do not require access to networks other than localhost SHOULD use PrivateNetwork. Note that some actions may unexpectedly require network access, such as resolving non-system users or groups via NSS.
-
-    But this only matters for network daemons which listen on external interfaces, since local users already have access to the network interfaces.
-
-    And does not work for anything which needs to resolve domains or users (think about LDAP/NIS).
-
-    Only for non-system users; system users are already required to exist locally.
-
-    Or use syslog. There are so many things that could break that I do not feel confident enough to even use a SHOULD.
-
-    I've changed it to something less specific, and just recommend using it if possible.
+But this only matters for network daemons which listen on external interfaces, since local users already have access to the network interfaces.
+And does not work for anything which needs to resolve domains or users (think about LDAP/NIS).
+Only for non-system users; system users are already required to exist locally.
+Or use syslog. There are so many things that could break that I do not feel confident enough to even use a SHOULD.
+I've changed it to something less specific, and just recommend using it if possible.
 
 * Units SHOULD use PrivateTmp (if the daemon uses tempfiles) and PrivateDevices.
 * Units SHOULD use ProtectHome and ProtectSystem (full or on) (requires systemd >= 214)
-* Packages MUST NOT ship units, tmpfiles configuration, or other systemd  configuration in /etc; they MUST ship it in the systemwide locations in  /lib instead.  Configuration of systemd components in /etc is reserved  exclusively for the system administrator, as it overrides corresponding  configuration in /usr.
-* Units SHOULD use socket and/or bus activation wherever possible.  Socket/bus activation avoids the need to declare and maintain dependencies, instead allowing daemons and their dependencies to launch in parallel.  A package MAY allow the activated unit to launch on demand and exit when unused, or MAY launch it proactively at system startup, depending on user-desired behavior.
-* Packages that previously shipped init.d scripts referencing settings from a file in /etc/default/$defaultfile (such as to disable or configure the daemon) SHOULD do a one-time migration of appropriate settings from that file to corresponding override files in /etc/systemd.  Unit files MUST NOT reference files in /etc/default directly.
 
-    To migrate a setting used to enable/disable a unit, create a symlink from /etc/systemd/system/$unit to /dev/null.  However, if the daemon has a required configuration file, the preferred way to ship a disabled-by-default daemon is to ship that example file in /usr/share/doc/$package, and use ConditionPathExists=/etc/... in the unit file to only launch the daemon if configured.
+*  Packages MUST NOT ship units, tmpfiles configuration, or other systemd  configuration in /etc; they MUST ship it in the systemwide locations in  /lib instead.  Configuration of systemd components in /etc is reserved  exclusively for the system administrator, as it overrides corresponding  configuration in /usr.
 
-    To migrate a setting specifying command-line options or environment variables for a daemon, create a drop-in file /etc/systemd/system/${package}.service.d/migrated-from-etc-default-${package}.conf overriding the corresponding directives.  Only create this file if the settings in /etc/default do not match the package defaults, and only override the directives necessary to migrate the settings changed from the default.  Create this file even for services also disabled via a symlink to /dev/null.
+* Units SHOULD use socket and/or bus activation wherever possible.  Socket/bus activation avoids the need to declare and maintain dependencies, instead allowing daemons and their dependencies to launch in parallel.  A package MAY allow the activated unit to launch on demand and exit when unused, or MAY launch it proactively at system startup, depending on user-desired behavior.
 
-    This may work for corner cases but it could be very complex to implement in a general way.
+* Packages that previously shipped init.d scripts referencing settings from a file in /etc/default/$defaultfile (such as to disable or configure the daemon) SHOULD do a one-time migration of appropriate settings from that file to corresponding override files in /etc/systemd.  Unit files MUST NOT reference files in /etc/default directly.
+To migrate a setting used to enable/disable a unit, create a symlink from /etc/systemd/system/$unit to /dev/null.  However, if the daemon has a required configuration file, the preferred way to ship a disabled-by-default daemon is to ship that example file in /usr/share/doc/$package, and use ConditionPathExists=/etc/... in the unit file to only launch the daemon if configured.
+To migrate a setting specifying command-line options or environment variables for a daemon, create a drop-in file /etc/systemd/system/${package}.service.d/migrated-from-etc-default-${package}.conf overriding the corresponding directives.  Only create this file if the settings in /etc/default do not match the package defaults, and only override the directives necessary to migrate the settings changed from the default.  Create this file even for services also disabled via a symlink to /dev/null.
+This may work for corner cases but it could be very complex to implement in a general way.
+It's unlikely that we can implement a fully general solution in a helper package; some packages will need custom code handling this migration.
+This seems like bad advice, eg the approach in https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=764594 seems entirely reasonable. -- ajt@d.o
 
-    It's unlikely that we can implement a fully general solution in a helper package; some packages will need custom code handling this migration.
+* Programs SHOULD handle the dynamic addition and removal of network devices and addresses.  (Note that programs listening on all interfaces or on localhost only  will work by default, and programs configured to listen on a specific  address can use IP_FREEBIND rather than waiting for configuration of  that address.) Units for software that does not support dynamic addition and removal of network devices and addresses MUST depend on network-online.target, which blocks until after attempting to bring up all system-wide networks.
+I'd certainly love to make it a "MUST", but that would make too many packages instantly RC-buggy.  Let's start with SHOULD, and move to MUST when we've fixed some of the higher-profile broken cases.
+This is why my original formulation was conditional to support for dynamic interfaces: "Units MUST NOT depend on network-online.target unless the daemon is unable to handle the dynamic addition and removal of network devices".
+That's fine as long as there's a SHOULD for supporting the dynamic addition and removal of network devices.
+Then I propose: daemons SHOULD support dynamic addition and removal of network devices and IP addresses, but if and only if they do not then they MUST depend on network-online.target.
+Sounds good. Done.
 
-* Programs SHOULD handle the dynamic addition and removal of network devices and addresses.  (Note that programs listening on all interfaces or on localhost only  will work by default, and programs configured to listen on a specific  address can use IP_FREEBIND rather than waiting for configuration of  that address.) Units for software that does not support dynamic addition and removal of network devices and addresses MUST depend on network-online.target, which blocks until after attempting to bring up all system-wide networks.
+* Units, or code invoked synchronously from units, MUST NOT invoke other services using systemctl, service, or similar tools; doing so may lead to deadlock.  Such invocations typically indicate the need for a dependency, instead.
 
-    I'd certainly love to make it a "MUST", but that would make too many packages instantly RC-buggy.  Let's start with SHOULD, and move to MUST when we've fixed some of the higher-profile broken cases.
+* Units MUST either omit the StandardOutput and StandardError directives, or specify them as "null" if the invoked program produces excessive uninteresting output on standard output or standard error.  Units MUST NOT set any other value for StandardOutput or StandardError; doing so overrides the system administrator's preferred configuration from DefaultStandardOutput and DefaultStandardError in systemd-system.conf.
 
-    This is why my original formulation was conditional to support for dynamic interfaces: "Units MUST NOT depend on network-online.target unless the daemon is unable to handle the dynamic addition and removal of network devices".
-
-    That's fine as long as there's a SHOULD for supporting the dynamic addition and removal of network devices.
-
-    Then I propose: daemons SHOULD support dynamic addition and removal of network devices and IP addresses, but if and only if they do not then they MUST depend on network-online.target.
-
-    Sounds good. Done.
-
-* Units, or code invoked synchronously from units, MUST NOT invoke other services using systemctl, service, or similar tools; doing so may lead to deadlock.  Such invocations typically indicate the need for a dependency, instead.
-* Units MUST either omit the StandardOutput and StandardError directives, or specify them as "null" if the invoked program produces excessive uninteresting output on standard output or standard error.  Units MUST NOT set any other value for StandardOutput or StandardError; doing so overrides the system administrator's preferred configuration from DefaultStandardOutput and DefaultStandardError in systemd-system.conf.
 * Packages shipping a unit that specify a Conflicts= against unit files shipped as part of systemd MUST NOT break any software relying on the interface provided by that unit file.
-* Socket units MUST be stopped at the right time while upgrading and removing the package. 
 
-    FIXME: describe the right time.
-
-    FIXME: can we make dh-systemd do it automatically?
+* Socket units MUST be stopped at the right time while upgrading and removing the package. 
+FIXME: describe the right time.
+FIXME: can we make dh-systemd do it automatically?
 
 * Provide "standard" unit files examples for a simple plain daemon and a socket-activated/bus-activated one.
+
 * FIXME: provide correct snippet to test whether running under systemd, if absolutely necessary.
-
-    When would this be necessary? Do we need to explicit the cases?
-
-    Most frequently, this would be needed for code that should *not* run under systemd, but which sysvinit or similar systems need to work around issues.  For instance, the recent case of removing a telinit call to reload init.
-
-    Then maybe that code should check if such a different init system is running?
+When would this be necessary? Do we need to explicit the cases?
+Most frequently, this would be needed for code that should *not* run under systemd, but which sysvinit or similar systems need to work around issues.  For instance, the recent case of removing a telinit call to reload init.
+Then maybe that code should check if such a different init system is running?
 
 * FIXME: Packages which ship both a unit file and an /etc/init.d/ service MUST depend on ... / recommend ...
-* FIXME: Packages which ship only a systemd unit file, or otherwise depend on systemd, MUST depend on ...
 
-    Packages SHOULD accept patches adding support for other init systems, if feasible and maintainable.(We have the CTTE decision for this, it is out of place in this document.) (Actually, Debian Policy is exactly the right place to provide the language implementing this decision.)
+* FIXME: Packages which ship only a systemd unit file, or otherwise depend on systemd, MUST depend on ...
+Packages SHOULD accept patches adding support for other init systems, if feasible and maintainable.(We have the CTTE decision for this, it is out of place in this document.) (Actually, Debian Policy is exactly the right place to provide the language implementing this decision.)
 
 * FIXME: Packages using functionality of systemd only present in a given version V or newer MUST depend on ... (>= V)
-  What about packages where the .service file uses functionality only available in version V of systemd, but also supports sysvinit, upstart?
-  It should not Depend on systemd in this case and listing all sysvinit-compatible init systems isn't that great either...
+  What about packages where the .service file uses functionality only available in version V of systemd, but also supports sysvinit, upstart?
+  It should not Depend on systemd in this case and listing all sysvinit-compatible init systems isn't that great either...
+  Virtual package for "init system supporting /etc/init.d", perhaps?
+  They need a Breaks on older systemd versions. But this about is basic packaging so we do not really need to repeat it.
+  Won't that lead to apt potentially replacing systemd with a different init system to solve the Breaks?
+  It would indeed.  I think we want a dependency, not a conflicts/breaks.
+Breaks seems like the right thing here -- if a package works with any version of upstart or systemd >= 300, then trying to install it when systemd 300 isn't available *should* attempt to replace systemd 220 with upstart. - ajt@d.o
 
-      Virtual package for "init system supporting /etc/init.d", perhaps?
+* FIXME: We need a policy for using systemd-tmpfiles via tmpfiles.d.  Can we support use of that under other init systems?
 
-  They need a Breaks on older systemd versions. But this about is basic packaging so we do not really need to repeat it.
-  Won't that lead to apt potentially replacing systemd with a different init system to solve the Breaks?
-
-      It would indeed.  I think we want a dependency, not a conflicts/breaks.
-
-* FIXME: We need a policy for using systemd-tmpfiles via tmpfiles.d.  Can we support use of that under other init systems?
-* FIXME, in a separate section of Policy: Packages SHOULD NOT assume that /tmp can hold arbitrarily large files; some systems may mount /tmp as an in-memory filesystem such as tmpfs, and putting excessive data in /tmp may fail or consume excessive memory.  Packages SHOULD place potentially large temporary files in /var/tmp/ instead.  Packages SHOULD still prefer $TMPDIR to /var/tmp if set.
-
-    Let's postpone this debian-devel flamewar to another time, OK? If Red Hat is going to ship a tmpfs /tmp by default then other packages will adapt.
-
-    Making it a SHOULD NOT rather than a MUST NOT dodges the flamewar. A "SHOULD NOT" justifies filing a normal bug, but not an RC bug, which seems quite reasonable.
-
-    RHEL7 does NOT use a tmpfs by default, so let's just ignore this for a few more years.
+* FIXME, in a separate section of Policy: Packages SHOULD NOT assume that /tmp can hold arbitrarily large files; some systems may mount /tmp as an in-memory filesystem such as tmpfs, and putting excessive data in /tmp may fail or consume excessive memory.  Packages SHOULD place potentially large temporary files in /var/tmp/ instead.  Packages SHOULD still prefer $TMPDIR to /var/tmp if set.
+Let's postpone this debian-devel flamewar to another time, OK? If Red Hat is going to ship a tmpfs /tmp by default then other packages will adapt.
+Making it a SHOULD NOT rather than a MUST NOT dodges the flamewar. A "SHOULD NOT" justifies filing a normal bug, but not an RC bug, which seems quite reasonable.
+RHEL7 does NOT use a tmpfs by default, so let's just ignore this for a few more years.
 
 * Packages must not override services from other packages, or install drop-ins modifying services from other packages, without coordination with those packages.
-Next actions:
-    What shall we do with this? Is a page on wiki.d.o enough? If this should become part of the Policy, is anybody available to shepherd it trought the process?
-Useful resources:
 
-    http://fedoraproject.org/wiki/Changes/PrivateDevicesAndPrivateNetwork
+Next actions:
+    What shall we do with this? Is a page on wiki.d.o enough? If this should become part of the Policy, is anybody available to shepherd it trought the process?
+
+
+Useful resources:
+http://fedoraproject.org/wiki/Changes/PrivateDevicesAndPrivateNetwork
 
