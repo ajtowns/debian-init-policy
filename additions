@@ -1,11 +1,7 @@
-runlevels? "To the extent this says anything, it should be "Debian does
-not define different behavior for different numeric sysvinit runlevels
-2-5, though sysadmins may do so themselves.  Packages should always
-install init scripts into all numeric runlevels 2-5."  (Plus discussion
-about 0, 1, 6, etc.)"
-
 What should be included in maintainer scripts for systemd?
 
 rcS.d: ""don't".  These days, I wonder if Policy should hold new rcS
 scripts to the same standard as Pre-Depends: "ask if you think you need
 to add a new one"."
+
+Discuss runlevels 0, 1, 6, etc?
