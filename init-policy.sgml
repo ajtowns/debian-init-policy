@@ -306,10 +306,14 @@
          <heading>General advice</heading>
 
          <p>Most of the techniques for writing good unit files are
-         generally applicable, rather than specific to Debian. As such
-         using the upstream documentation, and working with upstream are
-         good ideas to follow. However, a few items are worth calling
-         out here:
+         generally applicable, rather than specific to Debian. As
+         such, using the upstream systemd documentation directly is
+         generally advisable, and it also makes sense to work closely
+         with upstream and other distributions<footnote>Fedora's
+         packaging guidelines for systemd units can be found at <url
+         id="http://fedoraproject.org/wiki/Packaging:Systemd"></footnote>
+         when working on unit files. However, a few items are worth
+         calling out here:
 
          <list>
          <item>
@@ -321,7 +325,7 @@
 
          <item>
            Units should use socket and/or bus activation wherever
-           possible. Socket/bus activation avoids the need to declare and
+           possible. Socket and bus activation avoids the need to declare and
            maintain dependencies on the service, instead allowing daemons
            and their dependencies to launch in parallel. A package may
            allow the activated unit to launch on demand and exit when
@@ -385,8 +389,9 @@
          </list>
 
          <p>Services should always run with minimal privileges to reduce
-         the potential attack surface. This can be done in a number
-         of ways:
+         the potential attack surface, in the event that an attacker
+         finds exploitable bugs in the service. This can be done in a
+         number of ways:
 
          <list>
          <item>Let systemd invoke the daemon as a regular user directly
@@ -449,8 +454,11 @@
 
          <p>If a package uses features only present in a recent version
          of systemd, that should usually be specified by a versioned
-         Breaks relationship, such as <example>Breaks: systemd (&lt;
-         215</example>. If this is done, the package should not be
+         Breaks relationship, eg:
+
+         <example>Breaks: systemd (&lt; 215</example>
+
+         If this is done, the package should not be
          uploaded to unstable until the needed version of systemd is
          already in testing; otherwise the package runs the risk of being
          promoted to testing before the needed version of systemd, and apt
