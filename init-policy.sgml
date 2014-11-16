@@ -229,6 +229,10 @@
       in different states, corresponding to a different combination
       of running services. In Debian, runlevels 2, 3, 4 and 5 are by
       default treated as equivalent, and the default runlevel is 2.
+      Administrators may use runlevels to configure sets of services or other
+      system behaviors, but packages should not make any assumptions about
+      different runlevels by default; packages should always install their init
+      scripts into all runlevels 2-5, not a subset of those runlevels.
       </p>
 
       <p>Scripts are associated with a runlevel by placing symlinks in
