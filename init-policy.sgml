@@ -317,10 +317,28 @@
 
          <list>
          <item>
-           Where possible, units should not use <tt>Type=forking</tt>
+           <p>Where possible, units should not use <tt>Type=forking</tt>
            or <tt>PIDFile</tt>, but instead should invoke daemons with
            options that tell them to remain in the foreground. This
            allows systemd to provide better monitoring of the process.
+
+           <p>If the daemon supports the native systemd readiness protocol,
+           that should usually be used (by setting <tt>Type=notify</tt>).
+         </item>
+
+         <item>
+           <p>If the daemon has options to output useful logging information
+           on standard output and/or standard error, these should be enabled.
+
+           <p>As a consequence, units should usually omit the <tt>StandardOutput</tt>
+           and <tt>StandardError</tt> directives, but may specify
+           them as <tt>"null"</tt> if the invoked program produces
+           excessive uninteresting output on standard output or
+           standard error. Units should not set any other value for
+           StandardOutput or StandardError; doing so would override
+           the system administrator's preferred configuration
+           from DefaultStandardOutput and DefaultStandardError in
+           systemd-system.conf.
          </item>
 
          <item>
@@ -375,17 +393,6 @@
            this behaviour.</p>
          </item>
 
-         <item>
-           Units should usually omit the <tt>StandardOutput</tt>
-           and <tt>StandardError</tt> directives, but may specify
-           them as <tt>"null"</tt> if the invoked program produces
-           excessive uninteresting output on standard output or
-           standard error. Units should not set any other value for
-           StandardOutput or StandardError; doing so would override
-           the system administrator's preferred configuration
-           from DefaultStandardOutput and DefaultStandardError in
-           systemd-system.conf.
-        </item>
          </list>
 
          <p>Services should always run with minimal privileges to reduce
@@ -458,12 +465,15 @@
 
          <example>Breaks: systemd (&lt; 215</example>
 
-         If this is done, the package should not be
+         If this is done, the package must not be
          uploaded to unstable until the needed version of systemd is
          already in testing; otherwise the package runs the risk of being
          promoted to testing before the needed version of systemd, and apt
          may resolve the dependency by unexpectedly replacing systemd with
          an alternative init system, rather than holding the package back.
+         (If such a package is uploaded to unstable, it is appropriate to
+         file a release-critical bug to hold it back from testing until systemd
+         is promoted to testing)
       </sect1>
 
       <sect1>
