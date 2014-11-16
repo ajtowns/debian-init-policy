@@ -193,7 +193,9 @@
       socket-based activation (started when a socket is accessed),
       bus-based activation (started when a client attempts to communicate
       with it over D-Bus), device-based activation (started when certain
-      hardware is plugged in or otherwise becomes available), and others.
+      hardware is plugged in or otherwise becomes available), path-based
+      activation (started when a file exists or a directory becomes non-empty),
+      and others.
       </p>
 
       <p>systemd uses "unit" files to determine how to manage
