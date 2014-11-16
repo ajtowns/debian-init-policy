@@ -29,8 +29,8 @@
       init system in use is to use either the <prgn>service</prgn> or
       <prgn>invoke-rc.d</prgn> commands. For example:
       <list>
-      <item><prgn>service openssh stop</prgn></item>
-      <item><prgn>invoke-rc.d openssh start</prgn></item>
+      <item><prgn>service ssh stop</prgn></item>
+      <item><prgn>invoke-rc.d ssh start</prgn></item>
       </list>
       </p>
       <p>
@@ -44,7 +44,7 @@
       <p>
       Historically, it has been common to invoke the init scripts
       in <file>/etc/init.d</file> directly, using a command such as
-      <prgn>/etc/init.d/openssh restart</prgn>. This remains supported
+      <prgn>/etc/init.d/ssh restart</prgn>. This remains supported
       (and in a systemd environment, such a command will actually invoke
       <prgn>systemctl</prgn> instead), but this is considered "legacy"
       behaviour, and admins are encouraged to transition to using
@@ -71,8 +71,8 @@
       <prgn>update-rc.d</prgn> should be used:
 
       <list>
-      <item><prgn>update-rc.d openssh enable</prgn></item>
-      <item><prgn>update-rc.d openssh disable</prgn></item>
+      <item><prgn>update-rc.d ssh enable</prgn></item>
+      <item><prgn>update-rc.d ssh disable</prgn></item>
       </list>
       </p>
 
