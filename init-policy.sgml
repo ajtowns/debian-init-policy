@@ -50,7 +50,7 @@
       behaviour, and admins are encouraged to transition to using
       the <prgn>service</prgn> command. A major disadvantage to invoking
       the init script script directly in this manner is that the admin's
-      environment settings can be accidently inheritted by the daemon,
+      environment settings can be accidently inherited by the daemon,
       and caused unwanted misbehaviour.
       </p>
       <p>
