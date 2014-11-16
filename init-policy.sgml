@@ -11,7 +11,7 @@
 
     <abstract>
       This manual describes the requirements for init systems
-      and init scripts within the Debian distirbution.
+      and init scripts within the Debian distribution.
     </abstract>
 
     <copyright>See the Debian Policy manual</copyright>
@@ -463,7 +463,7 @@
          of systemd, that should usually be specified by a versioned
          Breaks relationship, eg:
 
-         <example>Breaks: systemd (&lt; 215</example>
+         <example>Breaks: systemd (&lt; 215)</example>
 
          If this is done, the package must not be
          uploaded to unstable until the needed version of systemd is
@@ -524,7 +524,7 @@
         </item>
         <item>
             Where the service needs to be stopped during preinst, packages
-            should use <prgn>deb-systemd-helper</prgn> to mask the the
+            should use <prgn>deb-systemd-helper</prgn> to mask the
             service file to prevent the service from being restarted while
             the package is being upgraded. This is particularly important
             for socket and D-Bus services that might be restarted implicitly
