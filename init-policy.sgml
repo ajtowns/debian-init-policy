@@ -929,7 +929,8 @@
               The package maintainer scripts must use
               <prgn>invoke-rc.d</prgn> to invoke the
               <file>/etc/init.d/*</file> initscripts, instead of
-              calling them directly.
+              calling them directly or using the <prgn>service</prgn>
+              command or similar.
             </p>
 
             <p>
