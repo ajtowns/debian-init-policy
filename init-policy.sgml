@@ -95,9 +95,14 @@
       <heading>Using policy-rc.d to set daemon policy on install/upgrade</heading>
       <p>
       System administrators may provide a
-      <prgn>/usr/sbin/policy-rc.d</prgn> to alter the
-      default behaviour of <prgn>invoke-rc.d</prgn>. Note that
-      <prgn>update-rc.d</prgn> does not consult <prgn>policy-rc.d</prgn>.
+      <prgn>/usr/sbin/policy-rc.d</prgn> to alter the way
+      services are started, stopped and restarting during package
+      installation, removals and upgrades. This is achieved by
+      <prgn>invoke-rc.d</prgn> altering its behaviour based on querying
+      <prgn>policy-rc.d</prgn>. Note that <prgn>update-rc.d</prgn> does
+      not do likewise, so policy set in this manner will not affect the
+      behaviour of the system when it is (re)booted. This feature is
+      particularly useful for bootstrapping a new install.
       </p>
 
       <p>
@@ -158,9 +163,12 @@
       </taglist>
 
       The most useful behaviours are allowing, forbidding and overriding
-      actions.  </p> <p> Note that <var>$ACTIONS</var> may be a single
-      action (<tt>start</tt>, <tt>stop</tt>, etc), or may be a space
-      separated list of actions.
+      actions.  </p> 
+
+      <p>
+      Note that <var>$ACTIONS</var> may be a single action
+      (<tt>start</tt>, <tt>stop</tt>, etc), or may be a space separated
+      list of actions.
       </p>
 
       <p>
@@ -504,8 +512,8 @@
         systemctl to create a symlink. Augment the service file like this:
 
         <example>
-        [Install]
-        Alias=network-manager.service
+[Install]
+Alias=network-manager.service
         </example>
 
         <p>The init script must source
@@ -899,28 +907,24 @@
 
             <p>
               To get the default behavior for your package, put in your
-              <prgn>postinst</prgn> script
+              <prgn>postinst</prgn> script:
+
               <example compact="compact">
-                update-rc.d <var>package</var> defaults
+update-rc.d <var>package</var> defaults
               </example>
-              and in your <prgn>postrm</prgn>
+
+              and in your <prgn>postrm</prgn> script:
+
               <example compact="compact">
-                if [ "$1" = purge ]; then
-                    update-rc.d <var>package</var> remove
-                fi
-              </example>. Note that if your package changes runlevels
+if [ "$1" = purge ]; then
+    update-rc.d <var>package</var> remove
+fi
+              </example>
+
+              Note that if your package changes runlevels
               or priority, you may have to remove and recreate the links,
               since otherwise the old links may persist. Refer to the
               documentation of <prgn>update-rc.d</prgn>.
-            </p>
-
-            <p>
-              This will use a default sequence number of 20.  If it does
-              not matter when or in which order the <file>init.d</file>
-              script is run, use this default.  If it does, then you
-              should talk to the maintainer of the <prgn>sysvinit</prgn>
-              package or post to <tt>debian-devel</tt>, and they will
-              help you choose a number.
             </p>
 
             <p>
@@ -959,11 +963,9 @@
 
             <p>
               Most packages will simply need to change:
-              <example compact="compact">/etc/init.d/&lt;package&gt; &lt;action&gt;</example>
+              <example compact="compact">/etc/init.d/<var>package</var> <var>action</var></example>
               in their <prgn>postinst</prgn> and <prgn>prerm</prgn> scripts to:
-              <example compact="compact">
-                invoke-rc.d <var>package</var> &lt;action&gt;
-              </example>
+              <example compact="compact">invoke-rc.d <var>package</var> <var>action</var></example>
             </p>
 
             <p>
