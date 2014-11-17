@@ -57,10 +57,11 @@
       When using systemd, <prgn>service</prgn> and
       <prgn>invoke-rc.d</prgn> will operate on both init.d
       scripts and systemd service files, but will not work
-      with other types of unit files. In this case, admins are
-      required to use <prgn>systemctl</prgn> directly (instead of
-      <prgn>service</prgn>) or <prgn>deb-systemd-invoke</prgn> (instead
-      of <prgn>invoke-rc.d</prgn>).
+      with other types of unit files. In this case, admins and package
+      maintainers will need to use <prgn>systemctl</prgn> directly (instead of
+      <prgn>service</prgn>) or <prgn>deb-systemd-helper</prgn> (which supports
+      some systemctl actions without systemd available) or
+      <prgn>deb-systemd-invoke</prgn> (instead of <prgn>invoke-rc.d</prgn>).
       </p>
     </sect>
 
