@@ -1353,6 +1353,73 @@ fi
     </sect>
   </chapt>
 
+  <chapt id="timermaint">
+    <heading>Maintaining a Scheduled job</heading>
+
+    <sect id="backgroundtimers">
+      <heading>Background</heading>
+          <p>
+            There are a variety of different ways of job on different schedules.
+            The traditional approach uses the packages <prgn>cron</prgn>
+            <!-- and <prgn>anacron</prgn> --> with configuration files in
+            <file>/etc/cron.d</file> that must follow a special layout.
+            <!--
+            and standard scripts linked in
+            <file>/etc/cron.hourly|daily|weekly|monthly</file>-->
+          </p>
+          <p>
+            This functionality can now also be provided by native systemd timers.
+            To maintaint compatability with SysV Init; packages
+            that ships native timers must also ship corresponding crontabs.
+          </p>
+          <p>
+            These cron jobs must then also ensure that systemd is not
+            currently running to avoid duplicate execution.
+          </p>
+    </sect>
+
+    <sect id="systemdtimers">
+      <heading>Unit Files</heading>
+         <p>
+	    Unit files are documented via the systemd man pages, see
+	    <manref name="systemd.timer" section="5">,
+	    <manref name="systemd.unit" section="5">,
+	    <manref name="systemd.service" section="5">,
+	    <manref name="systemd.directives" section="5">,
+	    and related pages.
+	<p>
+	<p>
+	    You basically need to provide a timer with a
+	    <tt>[Install]</tt> section and a matching service.
+	    The service will be started by the timer.
+	    You may add a <tt>RefuseManualStart=yes</tt> directive
+	    in the service to forbid manual execution.
+	</p>
+	<p>
+	    These timers can be enabled in your maintainer script
+	    by using <prgn>dh_systemd_enable</prgn>
+	    and <prgn>dh_systemd_start</prgn>.
+	</p>
+
+    </sect>
+    <sect id="crontimers">
+      <heading>Crontabs</heading>
+      <p>
+        Crontab files are documented via your cron-daemon man pages, see
+        <manref name="crontab" section="5">,
+        and related pages. They must follow point 9.5 of the Debian Policy.
+      </p>
+      <p>
+        A canonical way to both ensure that systemd is not currently running, and to comply with
+        this point of the policy: <tt>The scripts or crontab entries in these directories should check if all necessary programs are installed before they try to execute them</tt> ; would be:
+      </p>
+      <p>
+        <tt>m h d m w user test -e /run/systemd/system || test -e /usr/bin/<var>pkg</var> && /usr/bin/<var>pkg</var></tt>
+      </p>
+    </sect>
+  </chapt>
+
+
   <chapt id="initsysmaint">
     <heading>Maintaining an Init System</heading>
     <sect id="sbininit">
